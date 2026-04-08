@@ -1,20 +1,59 @@
-YADS
+IODX
 =======
 
-**Y**ads **A**bstract **D**ata **S**yntax
+**Input Output Data syntaX**
 
-Mark-up language (like JSON, YAML), but much more convenient.
+IODX is a compact, human-readable data syntax for structured data in Java. It sits in the same space as JSON and YAML, but favors terse input, optional quoting, and readable entity-style notation.
+
+## Features
 
 * no commas
 * no white-space indentation or mandatory new lines
-* quotes are optional everywhere
-* can use `""`  and `''` interchangeably
+* lists, maps, entities, primitives
+* API for parsing and serialization
+* quotes are optional everywhere - keys, values, lists
+* can use `""`  or `''`
 * can use new-lines in `""` or `''` strings
-* comments `//` and `/* */` and are accessible in data
+* comments `//` and `/* */`
+* escaping is optional (except `\` and relevant quote)
+                           
+## Syntax
+```text
+// list
+(string 'quoted string' 123)
 
-### Data Syntax examples
+// maps
+usualMap = (key=value 'quoted key'="quoted value")
+emptMap = (=)
 
-```Java
+// entity
+entity(key=values and some list also)
+
+// strings
+can be unquoted 
+
+'single quoted do not need to escape "double" quotes'
+
+"double quoted do not need to escape 'single' quotes"
+
+'any string
+can have new lines
+in it'
+
+"escaping is useful\s\s
+though optional\n\n
+except \\ and \" "
+
+// other primitives
+numbers = (123 1.23f -12.3d etc)
+booleans = (true false)
+nulls = null
+
+```
+
+## Real life examples
+
+```java
 // Some hierarchical UI definition
 HBox(
   pos = (100 200)
@@ -25,7 +64,7 @@ HBox(
 )
 ```
 
-```Java
+```java
 // Some config
 serverType = node
 port = 8080
@@ -34,7 +73,7 @@ data = (info = "Awesome super server" author = "John Doe")
 services = (AuthService() AdminService())
 ```
 
-```Java
+```java
 // Some properties
 greeting = 'Hello traveller!'
 
@@ -44,58 +83,31 @@ travaller!
 '
 ```
 
-### Java implementation specifics
+## API
 
-* reading text to data
-* printing plus formatting
-* comments are also read/printed (except for Java serialization)
-* Java serializing/deserializing (focus on readability) 
+`yk.lang.iodx.Iodx` is an entry point. Look there for common scenarios and exmples.
 
-```Java
-    //serialize some abstract data
-    String serialized = Yads.printYadsEntity(yourInstance);
-    Object y = Yads.readYadsEntity("YourClass(field1=value1 field2=value2)");
-    
-    //serialize some abstract data without top-level class
-    String serialized = Yads.printYadsEntities(yourInstance);
-    YList<Object> y = Yads.readYadsEntities("'someString' field1=value1 field2=value2");
-    
-    //serialize some Java instance
-    String serialized = Yads.printJava(yourInstance);
-    YourClass y = (YourClass)Yads.readJava(YourClass.class, "YourClass(field1=value1 field2=value2)");
-
-    //serialize body of some Java class
-    String serialized = Yads.printJavaBody(yourInstance);
-    YourClass y = Yads.readJavaBody(YourClass.class, "field1=value1 field2=value2");
-```
-
-### Syntax overview
-
-* `()` - empty list
-* `(a b)` - list with two elements
-* `(=)` - empty map
-* `(a b k1=v1 k2=v2)` - keys/values and simple values can be together
-* `1 1f 1.0 1d 1l null true false` - numbers and other types
-* `someString` - unquoted string, no new lines, limited character set
-* `'some string' or "some string"` - quoted strings of any characters, new lines permitted
-* `'hello \r\n world \b'` - several escape types
-* `one-two,three` - list of five elements, operators and commas are parsed as separate elements
-* `Vec2(x=1 y=2)` - 'class' with data
+### API features
+* reading/writing text/data/classes
+* can read/write one src with one value, or many values
+* printing with tunable formatting
+* comments are first level citizen - add them on writing, or analyze on reading
+* java ser/deser
 
 ## mvn artifact
 ```xml
-<!--no artifact for the latest version currently -->
-<!--<repository>-->
-<!--   <id>yk.jcommon</id>-->
-<!--   <url>https://github.com/kravchik/mvn-repo/raw/master</url>-->
-<!--</repository>-->
+<repositories>
+    <repository>
+        <id>yk</id>
+        <url>https://github.com/kravchik/mvn-repo/raw/master</url>
+    </repository>
+</repositories>
 
 <dependency>
     <groupId>yk</groupId>
-    <artifactId>yads</artifactId>
-<!-- NO ARTIFACT ! SHOULD CHECK-OUT AND BUILD LOCALLY   -->
-    <version>0.3-SNAPSHOT</version>
+    <artifactId>iodx</artifactId>
+    <!-- NO ARTIFACT ! SHOULD CHECK-OUT AND BUILD LOCALLY   -->
+    <version>0.4-SNAPSHOT</version>
 </dependency>
 ```
-(current dev version is 0.3-SNAPSHOT)
-
+(current dev version is `0.4-SNAPSHOT`)

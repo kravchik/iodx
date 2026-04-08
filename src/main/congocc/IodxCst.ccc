@@ -1,38 +1,38 @@
 // CongoCC grammar (adapted from JavaCC version)
 
-PARSER_PACKAGE = yk.lang.yads.congocc;
-NODE_PACKAGE = yk.lang.yads.congocc.nodes;
+PARSER_PACKAGE = yk.lang.iodx.congocc;
+NODE_PACKAGE = yk.lang.iodx.congocc.nodes;
 JAVA_UNICODE_ESCAPE = true;
 TREE_BUILDING_ENABLED = false;
 
-INJECT YadsCstLexer : {
-    public YadsCstLexer(String inputSource, CharSequence input, LexicalState lexState, int startingLine, int startingColumn, boolean preserveLineEndings) {
+INJECT IodxCstLexer : {
+    public IodxCstLexer(String inputSource, CharSequence input, LexicalState lexState, int startingLine, int startingColumn, boolean preserveLineEndings) {
         super(inputSource, input, startingLine, startingColumn, 1, true, preserveLineEndings, true, "");
         if (lexicalState != null) switchTo(lexState);
     }
 }
 
-INJECT YadsCstParser : {
+INJECT IodxCstParser : {
     import yk.ycollections.YList;
     import static yk.ycollections.YArrayList.al;
     import static yk.ycollections.YHashMap.hm;
-    import yk.lang.yads.utils.Caret;
-    import yk.lang.yads.YadsCst;
+    import yk.lang.iodx.utils.Caret;
+    import yk.lang.iodx.IodxCst;
     import yk.ycollections.YMap;
-    import yk.lang.yads.utils.YadsEscapeUtils;
+    import yk.lang.iodx.utils.IodxEscapeUtils;
 }
 
-INJECT YadsCstParser :
+INJECT IodxCstParser :
 {
     /**
      * Convenient static method to parse a string directly
      * @param s the string to parse
-     * @return the parsed YadsCst
+     * @return the parsed IodxCst
      */
-    public static YadsCst parse(String s) {
+    public static IodxCst parse(String s) {
         //NOTE ! Should use special constructor with preserveLineEndings == true to properly handle \r
         //  (we are getting rid of \r instead of converting it to \n)
-        YadsCstParser parser = new YadsCstParser(new YadsCstLexer("input", s, YadsCstLexer.LexicalState.DEFAULT, 1, 1, true));
+        IodxCstParser parser = new IodxCstParser(new IodxCstLexer("input", s, IodxCstLexer.LexicalState.DEFAULT, 1, 1, true));
         return parser.parseListBody();
     }
 
@@ -122,21 +122,21 @@ TOKEN :
 
 
 // Main API method - parses list body (sequence of elements)
-YadsCst parseListBody() #void :
+IodxCst parseListBody() #void :
 {
-    YList<YadsCst> list;
+    YList<IodxCst> list;
     beginCaret();
 }
     list = parseList()
     {
-      return new YadsCst("LIST_BODY", finishCaret(), list);
+      return new IodxCst("LIST_BODY", finishCaret(), list);
     }
 ;
 
 YList parseList() #void :
 {
-    YList<YadsCst> list = al();
-    YadsCst value;
+    YList<IodxCst> list = al();
+    IodxCst value;
 }
     {beginCaret();}
     [ <WHITE_SPACE> ]
@@ -152,19 +152,19 @@ YList parseList() #void :
 ;
 
 // Helper method - parses any element (literal, class, comment, etc.)
-YadsCst parseElement() #void :
+IodxCst parseElement() #void :
 {
     Token t;
-    YadsCst node;
+    IodxCst node;
 }
 
     node = parseIdentifierOrClass() { return node; }
   |
     node = parseUnnamedClass(null) { return node; }
   |
-    t = <COMMENT_SINGLE_LINE> { return new YadsCst("COMMENT_SINGLE_LINE", createCaret(t), t.toString()); }
+    t = <COMMENT_SINGLE_LINE> { return new IodxCst("COMMENT_SINGLE_LINE", createCaret(t), t.toString()); }
   |
-    t = <COMMENT_MULTI_LINE> { return new YadsCst("COMMENT_MULTI_LINE", createCaret(t), t.toString()); }
+    t = <COMMENT_MULTI_LINE> { return new IodxCst("COMMENT_MULTI_LINE", createCaret(t), t.toString()); }
   |
     t = <INTEGER_LITERAL> { 
         String tokenStr = t.toString();
@@ -175,7 +175,7 @@ YadsCst parseElement() #void :
         } else {
             value = Integer.parseInt(tokenStr);
         }
-        return new YadsCst("INTEGER_LITERAL", createCaret(t), value);
+        return new IodxCst("INTEGER_LITERAL", createCaret(t), value);
     }
   |
     t = <FLOATING_POINT_LITERAL> { 
@@ -189,33 +189,33 @@ YadsCst parseElement() #void :
         } else {
             value = Float.parseFloat(tokenStr);
         }
-        return new YadsCst("FLOATING_POINT_LITERAL", createCaret(t), value);
+        return new IodxCst("FLOATING_POINT_LITERAL", createCaret(t), value);
     }
   |
     t = <ANY_OPERATOR> { 
-        return new YadsCst("ANY_OPERATOR", createCaret(t), t.toString()); 
+        return new IodxCst("ANY_OPERATOR", createCaret(t), t.toString()); 
     }
   |
     t = <ANY_SEPARATOR> {
-        return new YadsCst("ANY_SEPARATOR", createCaret(t), t.toString());
+        return new IodxCst("ANY_SEPARATOR", createCaret(t), t.toString());
     }
   |
     t = <STRING_LITERAL_DQ> {
-        return new YadsCst("STRING_LITERAL_DQ", createCaret(t), 
-            YadsEscapeUtils.unescapeDoubleQuotes(t.toString()));
+        return new IodxCst("STRING_LITERAL_DQ", createCaret(t), 
+            IodxEscapeUtils.unescapeDoubleQuotes(t.toString()));
     }
   |
     t = <STRING_LITERAL_SQ> { 
-        return new YadsCst("STRING_LITERAL_SQ", createCaret(t), 
-            YadsEscapeUtils.unescapeSingleQuotes(t.toString()));
+        return new IodxCst("STRING_LITERAL_SQ", createCaret(t), 
+            IodxEscapeUtils.unescapeSingleQuotes(t.toString()));
     }
 ;
 
 // Helper method - parses identifier and decides if it's a standalone literal or part of named class
-YadsCst parseIdentifierOrClass() #void :
+IodxCst parseIdentifierOrClass() #void :
 {
     Token identifier;
-    YadsCst nameNode;
+    IodxCst nameNode;
 }
     identifier = <ANY_LITERAL> {
         String identifierStr = identifier.toString();
@@ -229,7 +229,7 @@ YadsCst parseIdentifierOrClass() #void :
         } else {
             value = identifierStr;
         }
-        nameNode = new YadsCst("ANY_LITERAL", createCaret(identifier), value);
+        nameNode = new IodxCst("ANY_LITERAL", createCaret(identifier), value);
     }
     [
         nameNode = parseUnnamedClass(nameNode)
@@ -240,33 +240,33 @@ YadsCst parseIdentifierOrClass() #void :
 ;
 
 // Helper method - parses left parenthesis and returns node
-YadsCst parseLeftParen() #void :
+IodxCst parseLeftParen() #void :
 {
     Token leftParen;
 }
     leftParen = <LEFT_PAREN> {
-        return new YadsCst("LEFT_PAREN", createCaret(leftParen));
+        return new IodxCst("LEFT_PAREN", createCaret(leftParen));
     }
 ;
 
 // Helper method - parses right parenthesis and returns node
-YadsCst parseRightParen() #void :
+IodxCst parseRightParen() #void :
 {
     Token rightParen;
 }
     rightParen = <RIGHT_PAREN> {
-        return new YadsCst("RIGHT_PAREN", createCaret(rightParen));
+        return new IodxCst("RIGHT_PAREN", createCaret(rightParen));
     }
 ;
 
 // Helper method - parses class starting with '(' (optionally with name)
-YadsCst parseUnnamedClass(YadsCst nameNode) #void :
+IodxCst parseUnnamedClass(IodxCst nameNode) #void :
 {
-    YadsCst leftParenNode;
-    YadsCst rightParenNode;
-    YadsCst body;
-    YList<YadsCst> children = al();
-    YMap<String, YadsCst> fields = hm();
+    IodxCst leftParenNode;
+    IodxCst rightParenNode;
+    IodxCst body;
+    YList<IodxCst> children = al();
+    YMap<String, IodxCst> fields = hm();
     if (nameNode != null) {
         fields.put("name", nameNode);
         children.add(nameNode);
@@ -278,17 +278,17 @@ YadsCst parseUnnamedClass(YadsCst nameNode) #void :
         children.add(rightParenNode);
         fields.put("body", body);
         if (nameNode != null) {
-            return new YadsCst("NAMED_CLASS", Caret.startEnd(nameNode.caret, rightParenNode.caret), null, children, fields);
+            return new IodxCst("NAMED_CLASS", Caret.startEnd(nameNode.caret, rightParenNode.caret), null, children, fields);
         } else {
-            return new YadsCst("UNNAMED_CLASS", Caret.startEnd(leftParenNode.caret, rightParenNode.caret), null, children, fields);
+            return new IodxCst("UNNAMED_CLASS", Caret.startEnd(leftParenNode.caret, rightParenNode.caret), null, children, fields);
         }
     }
 ;
 
 // Main API method - parses either named or unnamed class
-YadsCst parseClass() #void :
+IodxCst parseClass() #void :
 {
-    YadsCst node;
+    IodxCst node;
 }
     node = parseIdentifierOrClass() { 
         if ("NAMED_CLASS".equals(node.type)) {

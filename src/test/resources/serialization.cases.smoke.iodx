@@ -29,14 +29,14 @@
 (
   java = '[]'
   expected = '()'
-  alternative = 'import yk.lang.yads.TestClass ()'
-  alternative = 'import yk.lang.yads.TestClass ()//'
-  alternative = 'import yk.lang.yads.TestClass ()/**/'
+  alternative = 'import yk.lang.iodx.TestClass ()'
+  alternative = 'import yk.lang.iodx.TestClass ()//'
+  alternative = 'import yk.lang.iodx.TestClass ()/**/'
 )
 
-(java = '{a=b}' expected = '(a=b)' alternative = 'import yk.lang.yads.TestClass (a=b)')
+(java = '{a=b}' expected = '(a=b)' alternative = 'import yk.lang.iodx.TestClass (a=b)')
 
-(java = '[1, 2, 3]' expected = '(1 2 3)' alternative = 'import yk.lang.yads.TestClass (1 2 3)')
+(java = '[1, 2, 3]' expected = '(1 2 3)' alternative = 'import yk.lang.iodx.TestClass (1 2 3)')
 
 (
   java = '[a]'

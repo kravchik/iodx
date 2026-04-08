@@ -40,7 +40,7 @@ You can write in both ways:
 #### can use `""`  and `''` interchangeably
   First of all, it is slightly simpler to use `'` instead of `"`. Second - in Java, you don't need to escape `'` in strings. Third - you can choose `'` when `"` prevails in your text and vice versa (You'd have to escape `"` symbol in a string like `"quote: \" "`).
 
-If you need to write something in Java code (for test purposes, or to make a request, for example), YADS seems the most easily writeable and readable.
+If you need to write something in Java code (for test purposes, or to make a request, for example), IODX seems the most easily writeable and readable.
 ```  
         String exampleJson = "{\"type\":\"VBox\",\"key\":\"value\",\"name\":\"Hello World\"}";
         String exampleYaml = "    type: VBox\n    key: value\n    name: Hello World\n";

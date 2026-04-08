@@ -1,6 +1,6 @@
-package yk.lang.yads;
+package yk.lang.iodx;
 
-import yk.lang.yads.utils.Caret;
+import yk.lang.iodx.utils.Caret;
 import yk.ycollections.Tuple;
 import yk.ycollections.YList;
 
@@ -16,29 +16,29 @@ import static yk.ycollections.Tuple.tuple;
 //  Item
 //  Thing, Thingy
 //  Piece
-public class YadsEntity {
+public class IodxEntity {
     public String name;
-    // Can contain primitives, strings, tuples, or other YadsEntity
+    // Can contain primitives, strings, tuples, or other IodxEntity
     public YList children;
     public Caret caret;
     // Contains carets corresponding to children (because not all child classes can contain them)
     public YList<Caret> childrenCarets;
 
-    public YadsEntity(String name, YList children) {
+    public IodxEntity(String name, YList children) {
         this.name = name;
         this.children = children;
         this.caret = null;
         this.childrenCarets = null;
     }
 
-    public YadsEntity(String name, YList children, Caret caret) {
+    public IodxEntity(String name, YList children, Caret caret) {
         this.name = name;
         this.children = children;
         this.caret = caret;
         this.childrenCarets = null;
     }
 
-    public YadsEntity(String name, YList children, Caret caret, YList<Caret> childrenCarets) {
+    public IodxEntity(String name, YList children, Caret caret, YList<Caret> childrenCarets) {
         this.name = name;
         this.children = children;
         this.caret = caret;
@@ -63,26 +63,26 @@ public class YadsEntity {
         return children.filter(o -> o instanceof Tuple);
     }
 
-    public YadsEntity withReplace(String key, Object value) {
+    public IodxEntity withReplace(String key, Object value) {
         if (key == null) throw new RuntimeException("key is null");
-        return new YadsEntity(name,
+        return new IodxEntity(name,
             children.map(c -> c instanceof Tuple && key.equals(((Tuple) c).a) ? tuple(key, value) : c),
             caret,
             childrenCarets);
     }
 
-    public static class YadsComment {
+    public static class IodxComment {
         public boolean isOneLine;
         public String text;
 
-        public YadsComment(boolean isOneLine, String text) {
+        public IodxComment(boolean isOneLine, String text) {
             this.isOneLine = isOneLine;
             this.text = text;
         }
 
         @Override
         public String toString() {
-            return "YadsComment{" +
+            return "IodxComment{" +
                     "isOneLine=" + isOneLine +
                     ", text='" + text + '\'' +
                     '}';
@@ -92,7 +92,7 @@ public class YadsEntity {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            YadsComment that = (YadsComment) o;
+            IodxComment that = (IodxComment) o;
             return isOneLine == that.isOneLine && Objects.equals(text, that.text);
         }
 
@@ -104,14 +104,14 @@ public class YadsEntity {
 
     @Override
     public String toString() {
-        return "YadsEntity{" + (name == null ? "" : "name='" + name + "', ") + "children=" + children + '}';
+        return "IodxEntity{" + (name == null ? "" : "name='" + name + "', ") + "children=" + children + '}';
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        YadsEntity that = (YadsEntity) o;
+        IodxEntity that = (IodxEntity) o;
         return Objects.equals(name, that.name) && Objects.equals(children, that.children);
     }
 

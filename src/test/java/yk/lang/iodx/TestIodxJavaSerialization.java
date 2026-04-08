@@ -1,7 +1,7 @@
-package yk.lang.yads;
+package yk.lang.iodx;
 
 import org.junit.Test;
-import yk.lang.yads.congocc.YadsCstParser;
+import yk.lang.iodx.congocc.IodxCstParser;
 import yk.ycollections.YList;
 
 import java.time.LocalDate;
@@ -16,13 +16,13 @@ import static yk.ycollections.YArrayList.al;
 import static yk.ycollections.YHashMap.hm;
 
 /**
- * Tests for YadsJavaToEntity and YadsJavaFromEntity.
+ * Tests for IodxJavaToEntity and IodxJavaFromEntity.
  * 
  * All tests follow the round-trip pattern:
- * originalData → serialize → YadsEntity → print → text → parse → resolve → YadsEntity → deserialize → restoredData
+ * originalData → serialize → IodxEntity → print → text → parse → resolve → IodxEntity → deserialize → restoredData
  */
 @SuppressWarnings("deprecation")
-public class TestYadsJavaSerialization {
+public class TestIodxJavaSerialization {
 
     
     /**
@@ -34,23 +34,23 @@ public class TestYadsJavaSerialization {
      */
     private void roundTripAssert(Object original, String expectedSerialized, Class<?>... availableClasses) {
         // Create serializer and deserializer instances
-        YadsJavaToEntity serializer = new YadsJavaToEntity(availableClasses);
-        YadsJavaFromEntity deserializer = new YadsJavaFromEntity(availableClasses);
+        IodxJavaToEntity serializer = new IodxJavaToEntity(availableClasses);
+        IodxJavaFromEntity deserializer = new IodxJavaFromEntity(availableClasses);
         
-        // Step 1: Serialize Java object to YadsEntity
+        // Step 1: Serialize Java object to IodxEntity
         Object serialized = serializer.serialize(original);
         
-        // Step 2: Print YadsEntity to text using existing infrastructure
-        String text = new YadsPrinter().print(serialized);
+        // Step 2: Print IodxEntity to text using existing infrastructure
+        String text = new IodxPrinter().print(serialized);
         assertEquals("Serialized format should match expected", expectedSerialized, text);
         
-        // Step 3: Parse text back to YadsCst using existing infrastructure
-        YadsCst parsed = YadsCstParser.parse(text);
+        // Step 3: Parse text back to IodxCst using existing infrastructure
+        IodxCst parsed = IodxCstParser.parse(text);
         
-        // Step 4: Resolve YadsCst to YadsEntity using existing infrastructure
-        Object resolved = YadsEntityFromCst.translate(parsed.children).get(0);
+        // Step 4: Resolve IodxCst to IodxEntity using existing infrastructure
+        Object resolved = IodxEntityFromCst.translate(parsed.children).get(0);
         
-        // Step 5: Deserialize YadsEntity back to Java object
+        // Step 5: Deserialize IodxEntity back to Java object
         Object deserialized = deserializer.deserialize(resolved);
         
         // Assert the content - type check is implicit in equals
@@ -62,6 +62,14 @@ public class TestYadsJavaSerialization {
      */
     private void roundTripAssert(Object original, String expectedSerialized) {
         roundTripAssert(original, expectedSerialized, new Class<?>[0]);
+    }
+
+    private static boolean hasMessageInCauseChain(Throwable throwable, String expectedPart) {
+        while (throwable != null) {
+            if (throwable.getMessage() != null && throwable.getMessage().contains(expectedPart)) return true;
+            throwable = throwable.getCause();
+        }
+        return false;
     }
 
     @Test
@@ -80,20 +88,20 @@ public class TestYadsJavaSerialization {
         roundTripAssert(false, "false");
         
         // Character becomes string (known limitation) - test manually
-        YadsJavaToEntity serializer = new YadsJavaToEntity();
-        YadsJavaFromEntity deserializer = new YadsJavaFromEntity();
+        IodxJavaToEntity serializer = new IodxJavaToEntity();
+        IodxJavaFromEntity deserializer = new IodxJavaFromEntity();
         
         Object serialized = serializer.serialize('a');
-        String text = new YadsPrinter().print(serialized);
-        YadsCst parsed = YadsCstParser.parse(text);
-        Object resolved = YadsEntityFromCst.translate(parsed.children).get(0);
+        String text = new IodxPrinter().print(serialized);
+        IodxCst parsed = IodxCstParser.parse(text);
+        Object resolved = IodxEntityFromCst.translate(parsed.children).get(0);
         Object charResult = deserializer.deserialize(resolved);
         assertEquals("Character should become string", "a", charResult);
         
         serialized = serializer.serialize(' ');
-        text = new YadsPrinter().print(serialized);
-        parsed = YadsCstParser.parse(text);
-        resolved = YadsEntityFromCst.translate(parsed.children).get(0);
+        text = new IodxPrinter().print(serialized);
+        parsed = IodxCstParser.parse(text);
+        resolved = IodxEntityFromCst.translate(parsed.children).get(0);
         charResult = deserializer.deserialize(resolved);
         assertEquals("Space character should become string", " ", charResult);
     }
@@ -167,7 +175,7 @@ public class TestYadsJavaSerialization {
     public void testUnsupportedSerializationType() {
         // Test that unsupported types throw exceptions during serialization
         Object unsupported = new java.util.Date();
-        YadsJavaToEntity serializer = new YadsJavaToEntity().setAllClassesAvailable(false); // no Date.class allowed
+        IodxJavaToEntity serializer = new IodxJavaToEntity().setAllClassesAvailable(false); // no Date.class allowed
         
         try {
             serializer.serialize(unsupported);
@@ -181,9 +189,9 @@ public class TestYadsJavaSerialization {
     @Test
     public void testUnsupportedDeserializationType() {
         // Test that unsupported entity types throw exceptions during deserialization
-        YadsEntity unsupportedEntity = new YadsEntity("com.unknown.Class", 
+        IodxEntity unsupportedEntity = new IodxEntity("com.unknown.Class", 
                                                         al("data"));
-        YadsJavaFromEntity deserializer = new YadsJavaFromEntity(); // no unknown classes allowed
+        IodxJavaFromEntity deserializer = new IodxJavaFromEntity(); // no unknown classes allowed
         
         try {
             deserializer.deserialize(unsupportedEntity);
@@ -198,10 +206,10 @@ public class TestYadsJavaSerialization {
     public void testInvalidMapDeserialization() {
         // Test that invalid elements in map throw exceptions during deserialization
         // Create entity with both Tuple and invalid string - this will be treated as map
-        YadsEntity invalidMapEntity = new YadsEntity(null, 
+        IodxEntity invalidMapEntity = new IodxEntity(null, 
                                                       al(tuple("key", "value"), "invalid_string_in_map"));
         
-        YadsJavaFromEntity deserializer = new YadsJavaFromEntity(); // no classes needed for map test
+        IodxJavaFromEntity deserializer = new IodxJavaFromEntity(); // no classes needed for map test
         
         try {
             deserializer.deserialize(invalidMapEntity);
@@ -247,6 +255,14 @@ public class TestYadsJavaSerialization {
                    java.util.Objects.equals(city, other.city);
         }
     }
+
+    public static class NoDefaultConstructorPerson {
+        public String name;
+        public int age;
+
+        public NoDefaultConstructorPerson(String ignored) {
+        }
+    }
     
     @Test
     public void testSimpleObjectRoundTrip() {
@@ -255,6 +271,15 @@ public class TestYadsJavaSerialization {
         person.age = 30;
         
         roundTripAssert(person, "Person(name = John age = 30)", Person.class);
+    }
+
+    @Test
+    public void testNoDefaultConstructorStillWorksWithFallbackEnabled() {
+        NoDefaultConstructorPerson result = (NoDefaultConstructorPerson) new IodxJavaFromEntity(NoDefaultConstructorPerson.class)
+            .deserialize(Iodx.readIodxEntity("NoDefaultConstructorPerson(name = John age = 30)"));
+
+        assertEquals("John", result.name);
+        assertEquals(30, result.age);
     }
     
     @Test
@@ -302,18 +327,18 @@ public class TestYadsJavaSerialization {
         List<Person> people = Arrays.asList(person1, person2);
         
         // Serialize and deserialize
-        YadsJavaToEntity serializer = new YadsJavaToEntity(Person.class, Address.class);
-        YadsJavaFromEntity deserializer = new YadsJavaFromEntity(Person.class, Address.class);
+        IodxJavaToEntity serializer = new IodxJavaToEntity(Person.class, Address.class);
+        IodxJavaFromEntity deserializer = new IodxJavaFromEntity(Person.class, Address.class);
         
         Object serialized = serializer.serialize(people);
-        String text = new YadsPrinter().print(serialized);
+        String text = new IodxPrinter().print(serialized);
         
         // Verify that the serialized form contains references
         assertTrue("Should contain reference", text.contains("ref("));
         
         // Parse and deserialize
-        YadsCst parsed = YadsCstParser.parse(text);
-        Object resolved = YadsEntityFromCst.translate(parsed.children).get(0);
+        IodxCst parsed = IodxCstParser.parse(text);
+        Object resolved = IodxEntityFromCst.translate(parsed.children).get(0);
         @SuppressWarnings("unchecked")
         List<Person> result = (List<Person>) deserializer.deserialize(resolved);
         
@@ -352,17 +377,17 @@ public class TestYadsJavaSerialization {
         List<Address> addresses = Arrays.asList(address1, address2, address1); // address1 appears twice
         
         // Test round-trip
-        YadsJavaToEntity serializer = new YadsJavaToEntity(Address.class);
-        YadsJavaFromEntity deserializer = new YadsJavaFromEntity(Address.class);
+        IodxJavaToEntity serializer = new IodxJavaToEntity(Address.class);
+        IodxJavaFromEntity deserializer = new IodxJavaFromEntity(Address.class);
         
         Object serialized = serializer.serialize(addresses);
-        String text = new YadsPrinter().print(serialized);
+        String text = new IodxPrinter().print(serialized);
         
         // Should contain references for duplicate address1
         assertTrue("Should contain reference for duplicate object", text.contains("ref("));
 
-        YadsCst parsed = YadsCstParser.parse(text);
-        Object resolved = YadsEntityFromCst.translate(parsed.children).get(0);
+        IodxCst parsed = IodxCstParser.parse(text);
+        Object resolved = IodxEntityFromCst.translate(parsed.children).get(0);
         @SuppressWarnings("unchecked")
         List<Address> result = (List<Address>) deserializer.deserialize(resolved);
         
@@ -382,18 +407,18 @@ public class TestYadsJavaSerialization {
         person.friend = person; // Circular reference to self!
         
         // Test round-trip serialization
-        YadsJavaToEntity serializer = new YadsJavaToEntity(Person.class);
-        YadsJavaFromEntity deserializer = new YadsJavaFromEntity(Person.class);
+        IodxJavaToEntity serializer = new IodxJavaToEntity(Person.class);
+        IodxJavaFromEntity deserializer = new IodxJavaFromEntity(Person.class);
         
         Object serialized = serializer.serialize(person);
-        String text = new YadsPrinter().print(serialized);
+        String text = new IodxPrinter().print(serialized);
         
         // Verify that the serialized form contains references
         assertTrue("Should contain reference for circular self-reference", text.contains("ref("));
         
         // Parse and deserialize
-        YadsCst parsed = YadsCstParser.parse(text);
-        Object resolved = YadsEntityFromCst.translate(parsed.children).get(0);
+        IodxCst parsed = IodxCstParser.parse(text);
+        Object resolved = IodxEntityFromCst.translate(parsed.children).get(0);
         Person result = (Person) deserializer.deserialize(resolved);
         
         // Verify that the circular reference is preserved
@@ -421,18 +446,18 @@ public class TestYadsJavaSerialization {
         List<Person> friends = Arrays.asList(alice, bob);
         
         // Test round-trip serialization
-        YadsJavaToEntity serializer = new YadsJavaToEntity(Person.class);
-        YadsJavaFromEntity deserializer = new YadsJavaFromEntity(Person.class);
+        IodxJavaToEntity serializer = new IodxJavaToEntity(Person.class);
+        IodxJavaFromEntity deserializer = new IodxJavaFromEntity(Person.class);
         
         Object serialized = serializer.serialize(friends);
-        String text = new YadsPrinter().print(serialized);
+        String text = new IodxPrinter().print(serialized);
         
         // Verify that the serialized form contains references
         assertTrue("Should contain references for circular references", text.contains("ref("));
         
         // Parse and deserialize
-        YadsCst parsed = YadsCstParser.parse(text);
-        Object resolved = YadsEntityFromCst.translate(parsed.children).get(0);
+        IodxCst parsed = IodxCstParser.parse(text);
+        Object resolved = IodxEntityFromCst.translate(parsed.children).get(0);
         @SuppressWarnings("unchecked")
         List<Person> result = (List<Person>) deserializer.deserialize(resolved);
         
@@ -457,10 +482,10 @@ public class TestYadsJavaSerialization {
         // age = 0 (default), address = null (default), friend = null (default)
         
         // Test with skipDefaultValues = true (default behavior)
-        String textSkip = new YadsPrinter().print(new YadsJavaToEntity(Person.class).serialize(person));
+        String textSkip = new IodxPrinter().print(new IodxJavaToEntity(Person.class).serialize(person));
 
         // Test with skipDefaultValues = false
-        String textNoSkip = new YadsPrinter().print(new YadsJavaToEntity(Person.class)
+        String textNoSkip = new IodxPrinter().print(new IodxJavaToEntity(Person.class)
             .setSkipDefaultValues(false).serialize(person));
 
         // With skipDefaultValues = true, should only show non-default fields
@@ -470,8 +495,8 @@ public class TestYadsJavaSerialization {
         assertEquals("With skipDefaultValues=false", "Person(name = Charlie age = 0 address = null friend = null)", textNoSkip);
         
         // Both should deserialize to the same result
-        Person resultSkip = Yads.readJava(Person.class, textSkip);
-        Person resultNoSkip = Yads.readJava(Person.class, textNoSkip);
+        Person resultSkip = Iodx.readJava(Person.class, textSkip);
+        Person resultNoSkip = Iodx.readJava(Person.class, textNoSkip);
 
         // Both results should be equivalent
         assertEquals("Charlie", resultSkip.name);
@@ -486,21 +511,51 @@ public class TestYadsJavaSerialization {
     }
 
     @Test
+    public void testSerializerFailsWithoutDefaultConstructorWhenFallbackDisabled() {
+        NoDefaultConstructorPerson person = new NoDefaultConstructorPerson("ctor");
+        person.name = "John";
+        person.age = 30;
+
+        try {
+            new IodxJavaToEntity(NoDefaultConstructorPerson.class)
+                .setAllowInstantiationWithoutDefaultConstructor(false)
+                .serialize(person);
+            fail("Expected RuntimeException when serializer fallback is disabled");
+        } catch (RuntimeException e) {
+            assertTrue(hasMessageInCauseChain(e, "No default constructor for "
+                + NoDefaultConstructorPerson.class.getName() + " and fallback instantiation is disabled"));
+        }
+    }
+
+    @Test
+    public void testDeserializerFailsWithoutDefaultConstructorWhenFallbackDisabled() {
+        try {
+            new IodxJavaFromEntity(NoDefaultConstructorPerson.class)
+                .setAllowInstantiationWithoutDefaultConstructor(false)
+                .deserialize(Iodx.readIodxEntity("NoDefaultConstructorPerson(name = John age = 30)"));
+            fail("Expected RuntimeException when deserializer fallback is disabled");
+        } catch (RuntimeException e) {
+            assertTrue(hasMessageInCauseChain(e, "No default constructor for "
+                + NoDefaultConstructorPerson.class.getName() + " and fallback instantiation is disabled"));
+        }
+    }
+
+    @Test
     public void testSerializerByClass() {
-        assertEquals("hello!", new YadsJavaToEntity()
+        assertEquals("hello!", new IodxJavaToEntity()
                 .addSerializerByClass(String.class, s -> s + "!")
                 .serialize("hello"));
 
-        assertEquals(al(2000, 3, 3), new YadsJavaToEntity()
+        assertEquals(al(2000, 3, 3), new IodxJavaToEntity()
                 .addSerializerByClass(Date.class, d -> al(d.getYear(), d.getMonth(), d.getDay()))
                 .serialize(new Date(2000, 3, 4)));
 
-        assertEquals("(2000 3 3)", Yads.printYadsEntity(new YadsJavaToEntity()
+        assertEquals("(2000 3 3)", Iodx.printIodxEntity(new IodxJavaToEntity()
                 .addSerializerByClass(Date.class, d -> al(d.getYear(), d.getMonth(), d.getDay()))
                 .serialize(new Date(2000, 3, 4))));
 
-        assertEquals("Date(2000 3 4)", Yads.printYadsEntity(new YadsJavaToEntity()
-                .addSerializerByClass(LocalDate.class, d -> new YadsEntity(
+        assertEquals("Date(2000 3 4)", Iodx.printIodxEntity(new IodxJavaToEntity()
+                .addSerializerByClass(LocalDate.class, d -> new IodxEntity(
                     "Date", al(d.getYear(), d.getMonthValue(), d.getDayOfMonth())))
                 .serialize(LocalDate.of(2000, 3, 4))));
 
@@ -509,25 +564,25 @@ public class TestYadsJavaSerialization {
     @Test
     public void testDeserializerByName() {
 
-        assertEquals(LocalDate.of(2025, 11, 1), new YadsJavaFromEntity()
-            .addDeserializerByName("Date", (ref, yadsEntity) -> LocalDate.of(
-                (Integer) yadsEntity.children.get(0),
-                (Integer) yadsEntity.children.get(1),
-                (Integer) yadsEntity.children.get(2))).deserialize(Yads.readYadsEntity("Date(2025 11 1)")));
+        assertEquals(LocalDate.of(2025, 11, 1), new IodxJavaFromEntity()
+            .addDeserializerByName("Date", (ref, iodxEntity) -> LocalDate.of(
+                (Integer) iodxEntity.children.get(0),
+                (Integer) iodxEntity.children.get(1),
+                (Integer) iodxEntity.children.get(2))).deserialize(Iodx.readIodxEntity("Date(2025 11 1)")));
 
 
-        YadsJavaFromEntity deserializer = new YadsJavaFromEntity();
-        deserializer.addDeserializerByName("SomeObject", (ref, yadsEntity) -> {
+        IodxJavaFromEntity deserializer = new IodxJavaFromEntity();
+        deserializer.addDeserializerByName("SomeObject", (ref, iodxEntity) -> {
                 YList result = al();
                 // store this newly created object BEFORE parsing it deeper (to be able to handle cycles)
                 if (ref != null) deserializer.putRef(ref, result);
-                result.add(deserializer.deserializeImpl(null, yadsEntity.children.get(0)));
+                result.add(deserializer.deserializeImpl(null, iodxEntity.children.get(0)));
                 // in this test, this will be self-reference
                 // careful to call 'deserializeImpl', not 'deserialize'
-                result.add(deserializer.deserializeImpl(null, yadsEntity.children.get(1)));
+                result.add(deserializer.deserializeImpl(null, iodxEntity.children.get(1)));
                 return result;
             });
-        assertEquals("[x, (this Collection)]", deserializer.deserialize(Yads.readYadsEntity("ref(1 SomeObject(x ref(1)))")).toString());
+        assertEquals("[x, (this Collection)]", deserializer.deserialize(Iodx.readIodxEntity("ref(1 SomeObject(x ref(1)))")).toString());
 
     }
 }

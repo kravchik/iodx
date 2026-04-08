@@ -1,9 +1,9 @@
-package yk.lang.yads;
+package yk.lang.iodx;
 
-import yk.lang.yads.congocc.YadsCstLexer;
-import yk.lang.yads.congocc.YadsCstParser;
-import yk.lang.yads.utils.BadException;
-import yk.lang.yads.utils.YadsEscapeUtils;
+import yk.lang.iodx.congocc.IodxCstLexer;
+import yk.lang.iodx.congocc.IodxCstParser;
+import yk.lang.iodx.utils.BadException;
+import yk.lang.iodx.utils.IodxEscapeUtils;
 import yk.ycollections.Tuple;
 import yk.ycollections.YList;
 
@@ -13,13 +13,13 @@ import java.util.Map;
 import static yk.ycollections.Tuple.tuple;
 import static yk.ycollections.YArrayList.al;
 
-public class YadsPrinter {
+public class IodxPrinter {
     public int maxWidth = 100;
     public int maxLocalWidth = Integer.MAX_VALUE;
     public String tab = "  ";
     public int compactFromLevel = 0;
 
-    public static String valueToString(Object valObj) {
+    public String valueToString(Object valObj) {
         String value;
         if (valObj == null) {
             value = "null";
@@ -28,8 +28,8 @@ public class YadsPrinter {
             value1 = valObj.toString();
             boolean woQuotes = withoutQuotes(value1);
             if (!woQuotes) {
-                if (value1.contains("'")) value1 = "\"" + YadsEscapeUtils.escapeDoubleQuotes(value1) + "\"";
-                else value1 = "'" + YadsEscapeUtils.escapeSingleQuotes(value1) + "'";
+                if (value1.contains("'")) value1 = "\"" + IodxEscapeUtils.escapeDoubleQuotes(value1) + "\"";
+                else value1 = "'" + IodxEscapeUtils.escapeSingleQuotes(value1) + "'";
             }
             value = value1;
         } else if (valObj instanceof Number) {
@@ -67,30 +67,15 @@ public class YadsPrinter {
         return value;
     }
 
-    public static boolean withoutQuotes(String value) {
-        if (value.equals("null")) return false;
-        if (value.equals("true")) return false;
-        if (value.equals("false")) return false;
-
-//TODO return this fast check
-//        boolean onlySimpleChars = true;
-//        for (int i = 0; i < value.length(); i++) {
-//            char c = value.charAt(i);
-//            if (c < '!' || c == '\\' || c == '"' || c == '\'') return false;
-//            if (c > '~') {
-//                onlySimpleChars = false;
-//                break;
-//            }
-//        }
-//        if (onlySimpleChars) return true;
+    public boolean withoutQuotes(String value) {
         try {
-            Object would = new YadsCstParser(new YadsCstLexer(value)).parseElement().value;
+            Object would = new IodxCstParser(new IodxCstLexer(value)).parseElement().value;
             if (value.equals(would)) return true;
         } catch (Exception | Error ignore) {}
         return false;
     }
 
-    public String print(YadsCst cst) {
+    public String print(IodxCst cst) {
         return printCst(0, cst).toString("\n");
     }
 
@@ -102,7 +87,7 @@ public class YadsPrinter {
         return printObjectList(elements, 0, null, null, false).toString("\n");
     }
 
-    private YList<String> printCst(int startAt, YadsCst cst) {
+    private YList<String> printCst(int startAt, IodxCst cst) {
         if (cst == null) return al("null");
         
         switch (cst.type) {
@@ -111,11 +96,11 @@ public class YadsPrinter {
             
             case "NAMED_CLASS":
                 String className = getTokenText(cst.childByField.get("name"));
-                YadsCst namedBody = cst.childByField.get("body");
+                IodxCst namedBody = cst.childByField.get("body");
                 return printObjectList(namedBody.children, startAt, className + "(", ")", true);
             
             case "UNNAMED_CLASS":
-                YadsCst unnamedBody = cst.childByField.get("body");
+                IodxCst unnamedBody = cst.childByField.get("body");
                 return printObjectList(unnamedBody.children, startAt, "(", ")", true);
             
             case "COMMENT_SINGLE_LINE":
@@ -147,8 +132,8 @@ public class YadsPrinter {
     }
 
     private YList<String> printObject(int startAt, Object obj) {
-        if (obj instanceof YadsCst) {
-            return printCst(startAt, (YadsCst) obj);
+        if (obj instanceof IodxCst) {
+            return printCst(startAt, (IodxCst) obj);
         } else if (obj instanceof List) {
             return printObjectList((YList) obj, startAt, "(", ")", true);
         } else if (obj instanceof Map) {
@@ -164,7 +149,7 @@ public class YadsPrinter {
             }
             return printObjectList(objects, startAt, "(", ")", true);
         } else if (obj instanceof Tuple) {
-            // Tuple -> key = value (using YadsEntityOutput logic)
+            // Tuple -> key = value (using IodxEntityOutput logic)
             Tuple<?, ?> tuple = (Tuple<?, ?>) obj;
             YList<String> result = printObject(startAt, tuple.a);
             if (result.isEmpty()) BadException.shouldNeverReachHere();
@@ -178,17 +163,17 @@ public class YadsPrinter {
                 result.add(valueResult.get(i));
             }
             return result;
-        } else if (obj instanceof YadsEntity.YadsComment) {
-            // YadsComment -> comment output
-            YadsEntity.YadsComment comment = (YadsEntity.YadsComment) obj;
+        } else if (obj instanceof IodxEntity.IodxComment) {
+            // IodxComment -> comment output
+            IodxEntity.IodxComment comment = (IodxEntity.IodxComment) obj;
             if (comment.isOneLine) {
                 return al("//" + comment.text);
             } else {
                 return al("/*" + comment.text + "*/");
             }
-        } else if (obj instanceof YadsEntity) {
-            // YadsEntity -> named or unnamed class
-            YadsEntity entity = (YadsEntity) obj;
+        } else if (obj instanceof IodxEntity) {
+            // IodxEntity -> named or unnamed class
+            IodxEntity entity = (IodxEntity) obj;
             YList<Object> children = entity.children;
             if (entity.name == null) {
                 // Unnamed class
@@ -199,11 +184,11 @@ public class YadsPrinter {
             }
         }
         
-        // Handle primitives using the same logic as YadsEntityOutput
+        // Handle primitives using the same logic as IodxEntityOutput
         return al(valueToString(obj));
     }
     
-    private String getTokenText(YadsCst cst) {
+    private String getTokenText(IodxCst cst) {
         // Handle null value for ANY_LITERAL (null literal)
         if (cst.value == null && "ANY_LITERAL".equals(cst.type)) {
             return "null";
@@ -219,10 +204,10 @@ public class YadsPrinter {
                     return formatFloatingPoint(cst.value);
                     
                 case "STRING_LITERAL_DQ":
-                    return "\"" + YadsEscapeUtils.escapeDoubleQuotes(cst.value.toString()) + "\"";
+                    return "\"" + IodxEscapeUtils.escapeDoubleQuotes(cst.value.toString()) + "\"";
                     
                 case "STRING_LITERAL_SQ":
-                    return "'" + YadsEscapeUtils.escapeSingleQuotes(cst.value.toString()) + "'";
+                    return "'" + IodxEscapeUtils.escapeSingleQuotes(cst.value.toString()) + "'";
                     
                 case "ANY_LITERAL":
                 case "ANY_OPERATOR":
@@ -278,8 +263,8 @@ public class YadsPrinter {
         
         for (Object obj : objects) {
             // Special handling for single-line comments to prevent compact mode
-            if (obj instanceof YadsEntity.YadsComment) {
-                YadsEntity.YadsComment comment = (YadsEntity.YadsComment) obj;
+            if (obj instanceof IodxEntity.IodxComment) {
+                IodxEntity.IodxComment comment = (IodxEntity.IodxComment) obj;
                 if (comment.isOneLine) {
                     tryCompact = false;
                 }
@@ -315,22 +300,22 @@ public class YadsPrinter {
         }
     }
 
-    public YadsPrinter setMaxWidth(int maxWidth) {
+    public IodxPrinter setMaxWidth(int maxWidth) {
         this.maxWidth = maxWidth;
         return this;
     }
 
-    public YadsPrinter setMaxLocalWidth(int maxLocalWidth) {
+    public IodxPrinter setMaxLocalWidth(int maxLocalWidth) {
         this.maxLocalWidth = maxLocalWidth;
         return this;
     }
 
-    public YadsPrinter setCompactFromLevel(int compactFromLevel) {
+    public IodxPrinter setCompactFromLevel(int compactFromLevel) {
         this.compactFromLevel = compactFromLevel;
         return this;
     }
 
-    public YadsPrinter setTab(String tab) {
+    public IodxPrinter setTab(String tab) {
         this.tab = tab;
         return this;
     }

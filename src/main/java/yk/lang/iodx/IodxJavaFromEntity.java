@@ -1,6 +1,6 @@
-package yk.lang.yads;
+package yk.lang.iodx;
 
-import yk.lang.yads.utils.Reflector;
+import yk.lang.iodx.utils.Reflector;
 import yk.ycollections.Tuple;
 import yk.ycollections.YList;
 import yk.ycollections.YMap;
@@ -15,46 +15,47 @@ import static yk.ycollections.YArrayList.al;
 import static yk.ycollections.YHashMap.hm;
 
 /**
- * Deserializes YadsEntity objects back to Java objects.
+ * Deserializes IodxEntity objects back to Java objects.
  * 
- * Converts YadsEntity objects (created by YadsJavaToEntity or parsed from text)
+ * Converts IodxEntity objects (created by IodxJavaToEntity or parsed from text)
  * back to their original Java object representations.
  * 
  * Current support:
  * - String: passes through unchanged
  * - Primitives (Integer, Long, Float, Double, Boolean, Character): pass through unchanged
  * - YList/List: converts to YArrayList
- * - YadsEntity without name: treats as lists if no Tuples, as YHashMap if contains Tuples
- * - YadsEntity with name: deserializes as object (only for explicitly allowed classes)
+ * - IodxEntity without name: treats as lists if no Tuples, as YHashMap if contains Tuples
+ * - IodxEntity with name: deserializes as object (only for explicitly allowed classes)
  */
-public class YadsJavaFromEntity {
+public class IodxJavaFromEntity {
     
     private final Map<String, Class<?>> classByName;
     private Map<Integer, Object> refs = new HashMap<>();
+    private boolean allowInstantiationWithoutDefaultConstructor = true;
 
-    private YMap<String, BiFunction<Integer, YadsEntity, Object>> deserializerByName = hm();
+    private YMap<String, BiFunction<Integer, IodxEntity, Object>> deserializerByName = hm();
     
     /**
      * Constructor that specifies which classes are allowed for object deserialization.
      * 
      * @param classes classes that can be deserialized as objects
      */
-    public YadsJavaFromEntity(Class<?>... classes) {
+    public IodxJavaFromEntity(Class<?>... classes) {
         this.classByName = new HashMap<>();
         addImport(classes);
     }
 
-    public YadsJavaFromEntity addImport(String name, Class<?> clazz) {
+    public IodxJavaFromEntity addImport(String name, Class<?> clazz) {
         classByName.put(name, clazz);
         return this;
     }
 
-    public YadsJavaFromEntity addImport(Class<?>... cc) {
+    public IodxJavaFromEntity addImport(Class<?>... cc) {
         for (Class<?> c : cc) classByName.put(c.getSimpleName(), c);
         return this;
     }
 
-    public YadsJavaFromEntity addDeserializerByName(String name, BiFunction<Integer, YadsEntity, Object> converter) {
+    public IodxJavaFromEntity addDeserializerByName(String name, BiFunction<Integer, IodxEntity, Object> converter) {
         deserializerByName.put(name, converter);
         return this;
     }
@@ -66,7 +67,7 @@ public class YadsJavaFromEntity {
     /**
      * Main entry point for deserialization.
      * 
-     * @param obj YadsEntity or primitive to deserialize
+     * @param obj IodxEntity or primitive to deserialize
      * @return Java object
      */
     public Object deserialize(Object obj) {
@@ -77,13 +78,13 @@ public class YadsJavaFromEntity {
     public Object deserializeImpl(Integer refId, Object obj) {
         if (obj == null) return null;
         if (obj instanceof List) return deserializeList(refId, (List) obj);
-        if (obj instanceof Map) return obj;//special case, empty map returned as a map, not YadsEntity
+        if (obj instanceof Map) return obj;//special case, empty map returned as a map, not IodxEntity
         if (obj instanceof String) return obj;
         if (obj instanceof Number) return obj;
         if (obj instanceof Boolean) return obj;
 
-        if (obj instanceof YadsEntity) {
-            YadsEntity entity = (YadsEntity) obj;
+        if (obj instanceof IodxEntity) {
+            IodxEntity entity = (IodxEntity) obj;
             
             // Named entities can be objects or references
             if (entity.name != null) {
@@ -134,7 +135,7 @@ public class YadsJavaFromEntity {
         for (Object child : children) {
             if (child instanceof Tuple) {
                 result.put(deserializeImpl(null, ((Tuple) child).a), deserializeImpl(null, ((Tuple) child).b));
-            } else if (child instanceof YadsEntity.YadsComment) {
+            } else if (child instanceof IodxEntity.IodxComment) {
                 // Skip comments
             } else throw new RuntimeException("Invalid element in map deserialization: "
                     + child.getClass().getName() + ", value: " + child);
@@ -148,14 +149,14 @@ public class YadsJavaFromEntity {
         if (List.class.isAssignableFrom(clazz)) return deserializeList(refId, children);
         if (Map.class.isAssignableFrom(clazz)) return deserializeMap(refId, children);
 
-        Object instance = Reflector.newInstanceArgless(clazz);
+        Object instance = Reflector.newInstanceArgless(clazz, allowInstantiationWithoutDefaultConstructor);
         if (refId != null) refs.put(refId, instance);
         deserializeObjectFields(instance, children);
         return instance;
     }
 
     /**
-     * Deserializes fields of an object from YadsEntity.
+     * Deserializes fields of an object from IodxEntity.
      * Separated method to allow proper reference handling.
      */
     private void deserializeObjectFields(Object instance, YList children) {
@@ -171,7 +172,7 @@ public class YadsJavaFromEntity {
                 Field field = Reflector.getField(clazz, fieldName);
                 if (field == null) throw new RuntimeException("Unknown field: " + fieldName);
                 Reflector.set(instance, field, fieldValue);
-            } else if (child instanceof YadsEntity.YadsComment) {
+            } else if (child instanceof IodxEntity.IodxComment) {
                 // Skip comments
             } else {
                 // Everything else is invalid in object context
@@ -183,7 +184,7 @@ public class YadsJavaFromEntity {
     /**
      * Handles reference entities: ref(id) or ref(id, object).
      */
-    private Object handleReference(YadsEntity entity) {
+    private Object handleReference(IodxEntity entity) {
         if (entity.children.size() == 1) {
             Integer refId = (Integer) entity.children.get(0);
             if (!refs.containsKey(refId)) throw new RuntimeException("Undefined reference id: " + refId);
@@ -196,5 +197,10 @@ public class YadsJavaFromEntity {
         } else {
             throw new RuntimeException("Unexpected number of arguments in ref: " + entity.children.size());
         }
+    }
+
+    public IodxJavaFromEntity setAllowInstantiationWithoutDefaultConstructor(boolean allowInstantiationWithoutDefaultConstructor) {
+        this.allowInstantiationWithoutDefaultConstructor = allowInstantiationWithoutDefaultConstructor;
+        return this;
     }
 }

@@ -1,6 +1,4 @@
-package yk.lang.yads.utils;
-
-import sun.reflect.ReflectionFactory;
+package yk.lang.iodx.utils;
 import yk.ycollections.YList;
 import yk.ycollections.YMap;
 
@@ -277,6 +275,10 @@ public class Reflector {
     private static final Map<Class, Constructor> constructors = new HashMap<Class, Constructor>();
 
     public static <T> T newInstanceArgless(Class cls) {
+        return newInstanceArgless(cls, true);
+    }
+
+    public static <T> T newInstanceArgless(Class cls, boolean allowInstantiationWithoutDefaultConstructor) {
         Constructor c = constructors.get(cls);
         if (c == null) {
             // search for default constructor
@@ -287,27 +289,28 @@ public class Reflector {
             }
         }
 
-        if (c == null) {
-            // if no default constructor found - use java serialization constructor
-            try {
-                Constructor objCon = Object.class.getDeclaredConstructor();
-                c = ReflectionFactory.getReflectionFactory().newConstructorForSerialization(cls, objCon);
-                if (c != null) {
-                    constructors.put(cls, c);
-                }
-            } catch (NoSuchMethodException ignore) {
-            }
-        }
-
         try {
-            if (c == null) {
-                throw BadException.shouldNeverReachHere();
+            if (c != null) {
+                c.setAccessible(true);
+                return (T) c.newInstance();
             }
-            c.setAccessible(true);
-            return (T) c.newInstance();
+            if (!allowInstantiationWithoutDefaultConstructor) {
+                throw new RuntimeException("No default constructor for " + cls.getName()
+                    + " and fallback instantiation is disabled");
+            }
+            return (T) allocateInstanceWithoutConstructor(cls);
         } catch (Exception e) {
             throw BadException.die(e, "Cannot create new instance of " + cls.getName());
         }
+    }
+
+    private static Object allocateInstanceWithoutConstructor(Class cls) throws ReflectiveOperationException {
+        Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+        Field theUnsafeField = unsafeClass.getDeclaredField("theUnsafe");
+        theUnsafeField.setAccessible(true);
+        Object unsafe = theUnsafeField.get(null);
+        Method allocateInstance = unsafeClass.getMethod("allocateInstance", Class.class);
+        return allocateInstance.invoke(unsafe, cls);
     }
 
     public static Constructor getApropriateConstructor(Class clazz, Object... params) {

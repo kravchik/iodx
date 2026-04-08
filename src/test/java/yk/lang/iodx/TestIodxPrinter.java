@@ -1,7 +1,7 @@
-package yk.lang.yads;
+package yk.lang.iodx;
 
 import org.junit.Test;
-import yk.lang.yads.congocc.YadsCstParser;
+import yk.lang.iodx.congocc.IodxCstParser;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,16 +11,16 @@ import static yk.ycollections.Tuple.tuple;
 import static yk.ycollections.YArrayList.al;
 
 /**
- * Tests for YadsPrinter with new value-based output
+ * Tests for IodxPrinter with new value-based output
  */
-public class TestYadsPrinter {
+public class TestIodxPrinter {
 
     @Test
     public void testIntegerOutput() throws Exception {
-        YadsCstParser parser = new YadsCstParser("42");
-        YadsCst result = parser.parseListBody();
+        IodxCstParser parser = new IodxCstParser("42");
+        IodxCst result = parser.parseListBody();
         
-        YadsPrinter output = new YadsPrinter();
+        IodxPrinter output = new IodxPrinter();
         String outputStr = output.print(result);
         
         assertEquals("42", outputStr.trim());
@@ -28,10 +28,10 @@ public class TestYadsPrinter {
 
     @Test  
     public void testLongOutput() throws Exception {
-        YadsCstParser parser = new YadsCstParser("123L");
-        YadsCst result = parser.parseListBody();
+        IodxCstParser parser = new IodxCstParser("123L");
+        IodxCst result = parser.parseListBody();
         
-        YadsPrinter output = new YadsPrinter();
+        IodxPrinter output = new IodxPrinter();
         String outputStr = output.print(result);
         
         assertEquals("123", outputStr.trim());
@@ -39,10 +39,10 @@ public class TestYadsPrinter {
 
     @Test
     public void testFloatOutput() throws Exception {
-        YadsCstParser parser = new YadsCstParser("3.14f");
-        YadsCst result = parser.parseListBody();
+        IodxCstParser parser = new IodxCstParser("3.14f");
+        IodxCst result = parser.parseListBody();
         
-        YadsPrinter output = new YadsPrinter();
+        IodxPrinter output = new IodxPrinter();
         String outputStr = output.print(result);
         
         // Float is default, no suffix in output
@@ -51,10 +51,10 @@ public class TestYadsPrinter {
 
     @Test
     public void testDoubleOutput() throws Exception {
-        YadsCstParser parser = new YadsCstParser("2.71d");
-        YadsCst result = parser.parseListBody();
+        IodxCstParser parser = new IodxCstParser("2.71d");
+        IodxCst result = parser.parseListBody();
         
-        YadsPrinter output = new YadsPrinter();
+        IodxPrinter output = new IodxPrinter();
         String outputStr = output.print(result);
         
         assertEquals("2.71d", outputStr.trim());
@@ -62,10 +62,10 @@ public class TestYadsPrinter {
 
     @Test
     public void testStringOutput() throws Exception {
-        YadsCstParser parser = new YadsCstParser("\"hello world\"");
-        YadsCst result = parser.parseListBody();
+        IodxCstParser parser = new IodxCstParser("\"hello world\"");
+        IodxCst result = parser.parseListBody();
         
-        YadsPrinter output = new YadsPrinter();
+        IodxPrinter output = new IodxPrinter();
         String outputStr = output.print(result);
         
         assertEquals("\"hello world\"", outputStr.trim());
@@ -73,10 +73,10 @@ public class TestYadsPrinter {
 
     @Test
     public void testStringWithEscapesOutput() throws Exception {
-        YadsCstParser parser = new YadsCstParser("\"hello\\nworld\"");
-        YadsCst result = parser.parseListBody();
+        IodxCstParser parser = new IodxCstParser("\"hello\\nworld\"");
+        IodxCst result = parser.parseListBody();
         
-        YadsPrinter output = new YadsPrinter();
+        IodxPrinter output = new IodxPrinter();
         String outputStr = output.print(result);
         
         assertEquals("\"hello\nworld\"", outputStr.trim());
@@ -84,10 +84,10 @@ public class TestYadsPrinter {
 
     @Test
     public void testComplexExpression() throws Exception {
-        YadsCstParser parser = new YadsCstParser("myClass(42 \"test\" 3.14)");
-        YadsCst result = parser.parseListBody();
+        IodxCstParser parser = new IodxCstParser("myClass(42 \"test\" 3.14)");
+        IodxCst result = parser.parseListBody();
         
-        YadsPrinter output = new YadsPrinter();
+        IodxPrinter output = new IodxPrinter();
         String outputStr = output.print(result);
         
         // 3.14 without suffix parses as Float, outputs without suffix
@@ -96,7 +96,7 @@ public class TestYadsPrinter {
 
     @Test
     public void testPrimitiveObjects() {
-        YadsPrinter output = new YadsPrinter();
+        IodxPrinter output = new IodxPrinter();
         
         // Test integers
         assertEquals("42", output.print(42).trim());
@@ -130,7 +130,7 @@ public class TestYadsPrinter {
 
     @Test
     public void testListSerialization() {
-        YadsPrinter output = new YadsPrinter();
+        IodxPrinter output = new IodxPrinter();
         
         // Empty list
         assertEquals("()", output.print(al()).trim());
@@ -155,7 +155,7 @@ public class TestYadsPrinter {
 
     @Test
     public void testMapSerialization() {
-        YadsPrinter output = new YadsPrinter();
+        IodxPrinter output = new IodxPrinter();
         
         // Empty map
         Map<String, Object> emptyMap = new HashMap<>();
@@ -175,7 +175,7 @@ public class TestYadsPrinter {
 
     @Test
     public void testTupleSerialization() {
-        YadsPrinter output = new YadsPrinter();
+        IodxPrinter output = new IodxPrinter();
         
         // Simple tuple
         assertEquals("key = value", output.print(tuple("key", "value")).trim());
@@ -186,36 +186,36 @@ public class TestYadsPrinter {
     }
 
     @Test
-    public void testYadsCommentSerialization() {
-        YadsPrinter output = new YadsPrinter();
+    public void testIodxCommentSerialization() {
+        IodxPrinter output = new IodxPrinter();
         
         // Single line comment
-        YadsEntity.YadsComment singleComment = new YadsEntity.YadsComment(true, " This is a comment");
+        IodxEntity.IodxComment singleComment = new IodxEntity.IodxComment(true, " This is a comment");
         assertEquals("// This is a comment", output.print(singleComment).trim());
         
         // Multi-line comment
-        YadsEntity.YadsComment multiComment = new YadsEntity.YadsComment(false, " Multi line comment ");
+        IodxEntity.IodxComment multiComment = new IodxEntity.IodxComment(false, " Multi line comment ");
         assertEquals("/* Multi line comment */", output.print(multiComment).trim());
         
         // Comment in list - single line comments prevent compact format
         String expected = "(\n  42\n  // comment\n  hello\n)";
-        assertEquals(expected, output.print(al(42, new YadsEntity.YadsComment(true, " comment"), "hello")));
+        assertEquals(expected, output.print(al(42, new IodxEntity.IodxComment(true, " comment"), "hello")));
     }
 
     @Test
-    public void testYadsEntitySerialization() {
-        YadsPrinter output = new YadsPrinter();
+    public void testIodxEntitySerialization() {
+        IodxPrinter output = new IodxPrinter();
         
         // Unnamed entity
-        YadsEntity unnamedEntity = new YadsEntity(null, al(1, 2, 3));
+        IodxEntity unnamedEntity = new IodxEntity(null, al(1, 2, 3));
         assertEquals("(1 2 3)", output.print(unnamedEntity).trim());
         
         // Named entity  
-        YadsEntity namedEntity = new YadsEntity("Vec2", al("x", "y"));
+        IodxEntity namedEntity = new IodxEntity("Vec2", al("x", "y"));
         assertEquals("Vec2(x y)", output.print(namedEntity).trim());
         
         // Entity with tuples
-        YadsEntity entityWithTuples = new YadsEntity("Config", al(
+        IodxEntity entityWithTuples = new IodxEntity("Config", al(
             tuple("width", 800),
             tuple("height", 600),
             "visible"
@@ -226,14 +226,14 @@ public class TestYadsPrinter {
         assertTrue("Should contain height = 600", result.contains("height = 600"));
         
         // Nested entities
-        YadsEntity innerEntity = new YadsEntity("Point", al(10, 20));
-        YadsEntity outerEntity = new YadsEntity("Shape", al(innerEntity, "red"));
+        IodxEntity innerEntity = new IodxEntity("Point", al(10, 20));
+        IodxEntity outerEntity = new IodxEntity("Shape", al(innerEntity, "red"));
         assertEquals("Shape(Point(10 20) red)", output.print(outerEntity).trim());
     }
 
     @Test
     public void testUnsupportedObjectType() {
-        YadsPrinter output = new YadsPrinter();
+        IodxPrinter output = new IodxPrinter();
         
         // Try to serialize an unsupported object
         Object unsupported = new java.util.Date();
@@ -256,10 +256,10 @@ public class TestYadsPrinter {
                        "'FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF'" +
                        ") = npc(name = Foo))";
 
-        YadsCst parsed = YadsCstParser.parse(input);
-        Object resolved = YadsEntityFromCst.translate(parsed.children).get(0);
+        IodxCst parsed = IodxCstParser.parse(input);
+        Object resolved = IodxEntityFromCst.translate(parsed.children).get(0);
         
-        YadsPrinter output = new YadsPrinter();
+        IodxPrinter output = new IodxPrinter();
         output.maxWidth = 8;
         String result = output.print(resolved);
         

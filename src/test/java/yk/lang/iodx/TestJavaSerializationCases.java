@@ -1,4 +1,4 @@
-package yk.lang.yads;
+package yk.lang.iodx;
 
 import org.junit.Test;
 
@@ -9,27 +9,27 @@ public class TestJavaSerializationCases {
     //    boolean errors = false;
     //    YList<String> result = al();
     //
-    //    YList<Object> oo = Yads.readYadsEntities(readResource("serialization.cases.smoke.yads"));
+    //    YList<Object> oo = Iodx.readIodxEntities(readResource("serialization.cases.smoke.iodx"));
     //    for (Object o : oo) {
-    //        if (o instanceof YadsEntity) {
+    //        if (o instanceof IodxEntity) {
     //
-    //            YadsEntity ye = (YadsEntity) o;
-    //            YadsEntity currentEntity = new YadsEntity(ye.name, al());
+    //            IodxEntity ye = (IodxEntity) o;
+    //            IodxEntity currentEntity = new IodxEntity(ye.name, al());
     //
     //            String java = (String) ye.get("java");
     //            if (java == null) {
     //                errors = true;
-    //                currentEntity.children.add(new YadsEntity.YadsComment(true, "!!! absent 'java' field"));
+    //                currentEntity.children.add(new IodxEntity.IodxComment(true, "!!! absent 'java' field"));
     //            }
     //
     //            String expected = (String) ye.get("expected");
     //            if (expected == null) {
     //                errors = true;
-    //                currentEntity.children.add(new YadsEntity.YadsComment(true, "!!! absent 'expected' field"));
+    //                currentEntity.children.add(new IodxEntity.IodxComment(true, "!!! absent 'expected' field"));
     //            }
     //
     //            //TODO default imports in test case and globally
-    //            Object data = YadsJava.deserialize(expected);
+    //            Object data = IodxJava.deserialize(expected);
     //
     //            for (Object child : ye.children) {
     //                System.out.println(child);
@@ -45,7 +45,7 @@ public class TestJavaSerializationCases {
     //                    } else if ("expected".equals(t.a)) {
     //                        currentEntity.children.add(child);
     //                    } else if (expected != null && "alternative".equals(t.a)) {
-    //                        Object altActual = YadsJava.deserialize((String) t.b);
+    //                        Object altActual = IodxJava.deserialize((String) t.b);
     //                        if (!data.equals(altActual)) {
     //                            errors = true;
     //                            currentEntity.children.add(new Tuple<>("alternative", "NOT EQUALS"));
@@ -60,13 +60,13 @@ public class TestJavaSerializationCases {
     //                }
     //            }
     //            System.out.println(currentEntity);
-    //            result.add(Yads.printYadsEntity(currentEntity));
+    //            result.add(Iodx.printIodxEntity(currentEntity));
     //        } else {
-    //            result.add(Yads.printYadsEntities(al(o)));
+    //            result.add(Iodx.printIodxEntities(al(o)));
     //        }
     //    }
     //    //errors = true;
-    //    if (errors) assertEquals(readResource("serialization.cases.smoke.yads"), result.toString("\n\n"));
+    //    if (errors) assertEquals(readResource("serialization.cases.smoke.iodx"), result.toString("\n\n"));
     }
 
 }

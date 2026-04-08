@@ -1,4 +1,4 @@
-package yk.lang.yads.utils;
+package yk.lang.iodx.utils;
 
 /**
  * Created with IntelliJ IDEA.

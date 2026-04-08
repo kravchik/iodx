@@ -1,4 +1,4 @@
-import yk.lang.yads.TestHierarchy
+import yk.lang.iodx.TestHierarchy
 (
   TestHierarchy(
     map=(

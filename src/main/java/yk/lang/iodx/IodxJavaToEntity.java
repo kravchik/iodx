@@ -1,6 +1,6 @@
-package yk.lang.yads;
+package yk.lang.iodx;
 
-import yk.lang.yads.utils.Reflector;
+import yk.lang.iodx.utils.Reflector;
 import yk.ycollections.Tuple;
 import yk.ycollections.YList;
 import yk.ycollections.YMap;
@@ -17,25 +17,26 @@ import static yk.ycollections.YArrayList.al;
 import static yk.ycollections.YHashMap.hm;
 
 /**
- * Serializes Java objects to YadsEntity representation.
+ * Serializes Java objects to IodxEntity representation.
  * 
- * Converts Java objects to YadsEntity objects that can be printed by YadsPrinter
- * and deserialized back by YadsJavaFromEntity.
+ * Converts Java objects to IodxEntity objects that can be printed by IodxPrinter
+ * and deserialized back by IodxJavaFromEntity.
  * 
  * Current support:
  * - String: passes through unchanged
  * - Primitives (Integer, Long, Float, Double, Boolean, Character): pass through unchanged
  * - List: converts to YList (without wrapper)
- * - Map: converts to YadsEntity without name, all elements as Tuple
- * - Objects: converts to YadsEntity with class simple name and field tuples (only for explicitly allowed classes)
+ * - Map: converts to IodxEntity without name, all elements as Tuple
+ * - Objects: converts to IodxEntity with class simple name and field tuples (only for explicitly allowed classes)
  */
-public class YadsJavaToEntity {
+public class IodxJavaToEntity {
     
     private final YMap<Class<?>, String> availableClasses;
-    private IdentityHashMap<Object, Tuple<YadsEntity, Integer>> identity = new IdentityHashMap<>();
+    private IdentityHashMap<Object, Tuple<IodxEntity, Integer>> identity = new IdentityHashMap<>();
     private int nextRefId = 1;
     private boolean skipDefaultValues = true;
     private boolean allClassesAvailable = true;
+    private boolean allowInstantiationWithoutDefaultConstructor = true;
 
     private YMap<Class, Function> serializerByClass = hm();
     
@@ -44,16 +45,16 @@ public class YadsJavaToEntity {
      *
      * @param classes classes that can be serialized as objects
      */
-    public YadsJavaToEntity(Class<?>... classes) {
+    public IodxJavaToEntity(Class<?>... classes) {
         this.availableClasses = al(classes).toMap(v -> v, v -> v.getSimpleName());
     }
 
-    public YadsJavaToEntity addImport(Class<?> clazz) {
+    public IodxJavaToEntity addImport(Class<?> clazz) {
         availableClasses.put(clazz, clazz.getSimpleName());
         return this;
     }
 
-    public <T> YadsJavaToEntity addSerializerByClass(Class<T> c, Function<T, Object> converter) {
+    public <T> IodxJavaToEntity addSerializerByClass(Class<T> c, Function<T, Object> converter) {
         serializerByClass.put(c, converter);
         return this;
     }
@@ -62,7 +63,7 @@ public class YadsJavaToEntity {
      * Main entry point for serialization.
      * 
      * @param obj Java object to serialize
-     * @return YadsEntity representation or the object unchanged if it's a primitive
+     * @return IodxEntity representation or the object unchanged if it's a primitive
      */
     public Object serialize(Object obj) {
         // Clear identity map for each top-level serialization
@@ -81,7 +82,7 @@ public class YadsJavaToEntity {
      * Internal serialization with reference tracking.
      * 
      * @param obj Java object to serialize
-     * @return YadsEntity representation or the object unchanged if it's a primitive
+     * @return IodxEntity representation or the object unchanged if it's a primitive
      */
     private Object serializeImpl(Object obj) {
         if (obj == null) {
@@ -106,26 +107,26 @@ public class YadsJavaToEntity {
         // For reference-tracked objects (Lists, Maps, Objects), check if already serialized
         if (obj instanceof List || obj instanceof Map || availableClasses.containsKey(obj.getClass()) || allClassesAvailable) {
             if (identity.containsKey(obj)) {
-                Tuple<YadsEntity, Integer> tuple = identity.get(obj);
+                Tuple<IodxEntity, Integer> tuple = identity.get(obj);
                 if (tuple.b == 0) {
                     // Mark for reference creation
                     tuple.b = nextRefId++;
                 }
                 // Return reference placeholder
-                return new YadsEntity("ref", al(tuple.b));
+                return new IodxEntity("ref", al(tuple.b));
             }
             
             // Create tuple for tracking
-            Tuple<YadsEntity, Integer> tuple = new Tuple<>(null, 0);
+            Tuple<IodxEntity, Integer> tuple = new Tuple<>(null, 0);
             identity.put(obj, tuple);
             
-            YadsEntity result;
+            IodxEntity result;
             if (obj instanceof List) {
-                result = new YadsEntity(null, serializeList((List<?>) obj));
+                result = new IodxEntity(null, serializeList((List<?>) obj));
             } else if (obj instanceof Map) {
                 Object mapResult = serializeMap((Map<?, ?>) obj);
-                if (mapResult instanceof YadsEntity) {
-                    result = (YadsEntity) mapResult;
+                if (mapResult instanceof IodxEntity) {
+                    result = (IodxEntity) mapResult;
                 } else {
                     // Empty map case - return directly without wrapper
                     return mapResult;
@@ -160,15 +161,15 @@ public class YadsJavaToEntity {
     }
     
     /**
-     * Serializes a Map to YadsEntity without name, all elements as Tuple.
-     * For empty maps, returns the map directly so YadsPrinter can handle the (=) special case.
+     * Serializes a Map to IodxEntity without name, all elements as Tuple.
+     * For empty maps, returns the map directly so IodxPrinter can handle the (=) special case.
      * 
      * @param map the Map to serialize
-     * @return YadsEntity with serialized key-value pairs as Tuples, or the Map itself if empty
+     * @return IodxEntity with serialized key-value pairs as Tuples, or the Map itself if empty
      */
     private Object serializeMap(Map<?, ?> map) {
         if (map.isEmpty()) {
-            // Return the map directly so YadsPrinter can print it as (=)
+            // Return the map directly so IodxPrinter can print it as (=)
             return map;
         }
         
@@ -181,20 +182,22 @@ public class YadsJavaToEntity {
             serializedChildren.add(tuple(serializedKey, serializedValue));
         }
         
-        return new YadsEntity(null, serializedChildren);
+        return new IodxEntity(null, serializedChildren);
     }
     
     /**
-     * Serializes an object to YadsEntity with class simple name and field tuples.
+     * Serializes an object to IodxEntity with class simple name and field tuples.
      * 
      * @param obj the object to serialize
-     * @return YadsEntity with class name and field tuples
+     * @return IodxEntity with class name and field tuples
      */
-    private YadsEntity serializeObject(Object obj) {
+    private IodxEntity serializeObject(Object obj) {
         YList<Object> children = al();
         
         // Create instance with default values for comparison if skipDefaultValues is enabled
-        Object defaults = skipDefaultValues ? Reflector.newInstanceArgless(obj.getClass()) : null;
+        Object defaults = skipDefaultValues
+            ? Reflector.newInstanceArgless(obj.getClass(), allowInstantiationWithoutDefaultConstructor)
+            : null;
         
         // Get all fields using reflection
         for (Field field : Reflector.getAllFieldsInHierarchy(obj.getClass())) {
@@ -217,7 +220,7 @@ public class YadsJavaToEntity {
         }
 
         String name = availableClasses.get(obj.getClass());
-        return new YadsEntity(name == null ? obj.getClass().getSimpleName() : name, children);
+        return new IodxEntity(name == null ? obj.getClass().getSimpleName() : name, children);
     }
     
     /**
@@ -225,12 +228,12 @@ public class YadsJavaToEntity {
      * Replaces duplicate objects with ref(id, original) constructs.
      */
     private void resolveRefs() {
-        for (Tuple<YadsEntity, Integer> tuple : identity.values()) {
+        for (Tuple<IodxEntity, Integer> tuple : identity.values()) {
             if (tuple.b > 0) {
                 // Create a copy of the original entity with same children
                 YList<Object> childrenCopy = al();
                 childrenCopy.addAll(tuple.a.children);
-                YadsEntity copy = new YadsEntity(tuple.a.name, childrenCopy);
+                IodxEntity copy = new IodxEntity(tuple.a.name, childrenCopy);
                 
                 // Replace the original with ref(id, copy)
                 tuple.a.name = "ref";
@@ -239,13 +242,18 @@ public class YadsJavaToEntity {
         }
     }
 
-    public YadsJavaToEntity setSkipDefaultValues(boolean skipDefaultValues) {
+    public IodxJavaToEntity setSkipDefaultValues(boolean skipDefaultValues) {
         this.skipDefaultValues = skipDefaultValues;
         return this;
     }
 
-    public YadsJavaToEntity setAllClassesAvailable(boolean allClassesAvailable) {
+    public IodxJavaToEntity setAllClassesAvailable(boolean allClassesAvailable) {
         this.allClassesAvailable = allClassesAvailable;
+        return this;
+    }
+
+    public IodxJavaToEntity setAllowInstantiationWithoutDefaultConstructor(boolean allowInstantiationWithoutDefaultConstructor) {
+        this.allowInstantiationWithoutDefaultConstructor = allowInstantiationWithoutDefaultConstructor;
         return this;
     }
 }
