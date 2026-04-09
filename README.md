@@ -1,9 +1,11 @@
-IODX
-=======
+# IODX
 
 **Input Output Data syntaX**
 
 IODX is a compact, human-readable data syntax for structured data in Java. It sits in the same space as JSON and YAML, but favors terse input, optional quoting, and readable entity-style notation.
+
+* Main site: [iodx.org](https://iodx.org)
+* Main repository: [kravchik/iodx](https://github.com/kravchik/iodx)
 
 ## Features
 
@@ -16,8 +18,9 @@ IODX is a compact, human-readable data syntax for structured data in Java. It si
 * can use new-lines in `""` or `''` strings
 * comments `//` and `/* */`
 * escaping is optional (except `\` and relevant quote)
-                           
+
 ## Syntax
+
 ```text
 // list
 (string 'quoted string' 123)
@@ -48,7 +51,6 @@ except \\ and \" "
 numbers = (123 1.23f -12.3d etc)
 booleans = (true false)
 nulls = null
-
 ```
 
 ## Real life examples
@@ -88,6 +90,7 @@ travaller!
 `yk.lang.iodx.Iodx` is an entry point. Look there for common scenarios and exmples.
 
 ### API features
+
 * reading/writing text/data/classes
 * can read/write one src with one value, or many values
 * printing with tunable formatting
@@ -95,6 +98,7 @@ travaller!
 * java ser/deser
 
 ## mvn artifact
+
 ```xml
 <repositories>
     <repository>
@@ -106,8 +110,8 @@ travaller!
 <dependency>
     <groupId>yk</groupId>
     <artifactId>iodx</artifactId>
-    <!-- NO ARTIFACT ! SHOULD CHECK-OUT AND BUILD LOCALLY   -->
-    <version>0.4-SNAPSHOT</version>
+    <version>0.4</version>
 </dependency>
 ```
-(current dev version is `0.4-SNAPSHOT`)
+
+Current development version is `0.5-SNAPSHOT`.
