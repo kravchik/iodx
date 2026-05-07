@@ -2,22 +2,21 @@
 
 **Input Output Data syntaX**
 
-IODX is a compact, human-readable data syntax for structured data in Java. It sits in the same space as JSON and YAML, but favors terse input, optional quoting, and readable entity-style notation.
+IODX is a compact, human-readable syntax for any structured data. It is like JSON or YAML, but better.
 
 * Main site: [iodx.org](https://iodx.org)
-* Main repository: [kravchik/iodx](https://github.com/kravchik/iodx)
+* Java implementation: [kravchik/iodx](https://github.com/kravchik/iodx)
 
 ## Features
 
 * no commas
 * no white-space indentation or mandatory new lines
+* quotes can be omitted in keys and values (if the string is simple)
 * lists, maps, entities, primitives
-* API for parsing and serialization
-* quotes are optional everywhere - keys, values, lists
 * can use `""`  or `''`
-* can use new-lines in `""` or `''` strings
+* any quoted string supports new lines
+* escaping in any quoted string, and it is optional (except `\` and relevant quote)
 * comments `//` and `/* */`
-* escaping is optional (except `\` and relevant quote)
 
 ## Syntax
 
@@ -33,19 +32,19 @@ emptMap = (=)
 entity(key=values and some list also)
 
 // strings
-can be unquoted 
+can_be_unquoted 
 
-'single quoted do not need to escape "double" quotes'
+'single quoted do not need to escape "double" quotes, but \"can do so\"'
 
-"double quoted do not need to escape 'single' quotes"
+"double quoted do not need to escape 'single' quotes, but also \'can\'"
 
 'any string
 can have new lines
 in it'
 
 "escaping is useful\s\s
-though optional\n\n
-except \\ and \" "
+and it is optional\n\n
+except for \\ and \" "
 
 // other primitives
 numbers = (123 1.23f -12.3d etc)
@@ -55,7 +54,7 @@ nulls = null
 
 ## Real life examples
 
-```java
+```text
 // Some hierarchical UI definition
 HBox(
   pos = (100 200)
@@ -66,7 +65,47 @@ HBox(
 )
 ```
 
-```java
+Roughly the same structure in JSON:
+
+```json
+{
+  "type": "HBox",
+  "pos": [100, 200],
+  "children": [
+    {
+      "type": "VBox",
+      "children": [
+        {
+          "type": "Input",
+          "hint": "...input here"
+        },
+        {
+          "type": "Button",
+          "text": "Send"
+        }
+      ]
+    }
+  ]
+}
+```
+
+And in YAML:
+
+```yaml
+type: HBox
+pos:
+  - 100
+  - 200
+children:
+  - type: VBox
+    children:
+      - type: Input
+        hint: ...input here
+      - type: Button
+        text: Send
+```
+
+```text
 // Some config
 serverType = node
 port = 8080
@@ -75,7 +114,41 @@ data = (info = "Awesome super server" author = "John Doe")
 services = (AuthService() AdminService())
 ```
 
-```java
+Roughly the same structure in JSON:
+
+```json
+{
+  "serverType": "node",
+  "port": 8080,
+  "data": {
+    "info": "Awesome super server",
+    "author": "John Doe"
+  },
+  "services": [
+    {
+      "type": "AuthService"
+    },
+    {
+      "type": "AdminService"
+    }
+  ]
+}
+```
+
+And in YAML:
+
+```yaml
+serverType: node
+port: 8080
+data:
+  info: Awesome super server
+  author: John Doe
+services:
+  - type: AuthService
+  - type: AdminService
+```
+
+```text
 // Some properties
 greeting = 'Hello traveller!'
 
@@ -83,6 +156,25 @@ signature = '
 Have a nice day,
 travaller!
 '
+```
+
+Roughly the same structure in JSON:
+
+```json
+{
+  "greeting": "Hello traveller!",
+  "signature": "\nHave a nice day,\ntravaller!\n"
+}
+```
+
+And in YAML:
+
+```yaml
+greeting: Hello traveller!
+signature: |
+
+  Have a nice day,
+  travaller!
 ```
 
 ## API
