@@ -51,7 +51,9 @@ public class TestIodxEntitySerialization {
     @Test
     public void testEscapes() {
         testStrings("", "''", "\"\"");
-        testStrings(" ", "' '", "\" \"");
+        testStrings(" ", "' '", "\" \"", "'\\s'", "\"\\s\"");
+        testStrings("  middle  ", "'  middle  '", "'\\s\\smiddle\\s\\s'", "\"\\s\\smiddle\\s\\s\"");
+        testStrings("\\s", "'\\\\s'", "\"\\\\s\"");
         testStrings(" ' ", "\" ' \"",       "' \\' '", "\" \\' \"");
         testStrings(" \" ", "' \" '",       "\" \\\" \"", "' \\\" '");
 

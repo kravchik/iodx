@@ -12,7 +12,7 @@ public class IodxEscapeUtils {
     public static final YMap<Character, Character> ESCAPES_DQ = ESCAPES.with('\"', '\"');
     public static final YMap<Character, Character> UNESCAPES = ESCAPES.map((k, v) -> v, (k, v) -> k)
         //unescapes handle more permissive symbols than escapes produce, hence non-symmetry
-        .with('n', '\n', '\"', '\"', '\'', '\'');
+        .with('n', '\n', 's', ' ', '\"', '\"', '\'', '\'');
 
     private static String stripQuotes(String s) {
         return s.substring(1, s.length() - 1);

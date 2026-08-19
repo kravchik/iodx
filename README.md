@@ -52,7 +52,9 @@ booleans = (true false)
 nulls = null
 ```
 
-## Real life examples
+## Example
+        
+Some UI config in IODX
 
 ```text
 // Some hierarchical UI definition
