@@ -426,6 +426,24 @@ public class TestIodxJavaSerialization {
         assertEquals("Age should be preserved", 30, result.age);
         assertSame("Person should be their own friend", result, result.friend);
     }
+
+    @Test
+    public void testSelfReferencingList() {
+        List<Object> original = new ArrayList<>();
+        original.add("head");
+        original.add(original);
+
+        Object serialized = new IodxJavaToEntity().serialize(original);
+        String text = new IodxPrinter().print(serialized);
+        Object resolved = IodxEntityFromCst.translate(IodxCstParser.parse(text).children).get(0);
+
+        @SuppressWarnings("unchecked")
+        List<Object> result = (List<Object>) new IodxJavaFromEntity().deserialize(resolved);
+
+        assertEquals(2, result.size());
+        assertEquals("head", result.get(0));
+        assertSame("List should contain a reference to itself", result, result.get(1));
+    }
     
     @Test
     public void testMutualCircularReferences() {

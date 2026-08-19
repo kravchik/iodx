@@ -117,7 +117,7 @@ public class IodxJavaFromEntity {
 
     private YList<Object> deserializeList(Integer refId, List list) {
         YList<Object> result = al();
-        if (refId != null) refs.put(refId, list);
+        if (refId != null) refs.put(refId, result);
         for (Object child : (List<?>) list) {
             if (child instanceof Tuple) throw new RuntimeException("Unexpecte list element type: " + child.getClass());
             result.add(deserializeImpl(null, child));
