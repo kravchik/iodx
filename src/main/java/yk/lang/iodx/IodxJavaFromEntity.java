@@ -78,7 +78,10 @@ public class IodxJavaFromEntity {
     public Object deserializeImpl(Integer refId, Object obj) {
         if (obj == null) return null;
         if (obj instanceof List) return deserializeList(refId, (List) obj);
-        if (obj instanceof Map) return obj;//special case, empty map returned as a map, not IodxEntity
+        if (obj instanceof Map) {
+            if (refId != null) refs.put(refId, obj);
+            return obj; // Special case: (=) is resolved directly to an empty map.
+        }
         if (obj instanceof String) return obj;
         if (obj instanceof Number) return obj;
         if (obj instanceof Boolean) return obj;

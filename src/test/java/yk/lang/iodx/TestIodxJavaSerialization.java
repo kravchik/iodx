@@ -152,6 +152,24 @@ public class TestIodxJavaSerialization {
     }
 
     @Test
+    public void testSharedEmptyMapRoundTrip() {
+        Object emptyMap = hm();
+        List<Object> original = al(emptyMap, emptyMap);
+
+        Object serialized = new IodxJavaToEntity().serialize(original);
+        String text = new IodxPrinter().print(serialized);
+        assertEquals("(ref(1 (=)) ref(1))", text);
+
+        Object resolved = IodxEntityFromCst.translate(IodxCstParser.parse(text).children).get(0);
+        @SuppressWarnings("unchecked")
+        List<Object> result = (List<Object>) new IodxJavaFromEntity().deserialize(resolved);
+
+        assertEquals(2, result.size());
+        assertEquals(hm(), result.get(0));
+        assertSame("Both elements should reference the same map", result.get(0), result.get(1));
+    }
+
+    @Test
     public void testSimpleMapRoundTrip() {
         roundTripAssert(hm("key1", "value1", "key2", "value2"), "(key1 = value1 key2 = value2)");
     }

@@ -30,6 +30,8 @@ import static yk.ycollections.YHashMap.hm;
  * - Objects: converts to IodxEntity with class simple name and field tuples (only for explicitly allowed classes)
  */
 public class IodxJavaToEntity {
+    private static final String EMPTY_MAP_ENTITY_NAME = "=";
+
     
     private final YMap<Class<?>, String> availableClasses;
     private IdentityHashMap<Object, Tuple<IodxEntity, Integer>> identity = new IdentityHashMap<>();
@@ -124,13 +126,7 @@ public class IodxJavaToEntity {
             if (obj instanceof List) {
                 result = new IodxEntity(null, serializeList((List<?>) obj));
             } else if (obj instanceof Map) {
-                Object mapResult = serializeMap((Map<?, ?>) obj);
-                if (mapResult instanceof IodxEntity) {
-                    result = (IodxEntity) mapResult;
-                } else {
-                    // Empty map case - return directly without wrapper
-                    return mapResult;
-                }
+                result = serializeMap((Map<?, ?>) obj);
             } else {
                 result = serializeObject(obj);
             }
@@ -161,16 +157,14 @@ public class IodxJavaToEntity {
     }
     
     /**
-     * Serializes a Map to IodxEntity without name, all elements as Tuple.
-     * For empty maps, returns the map directly so IodxPrinter can handle the (=) special case.
-     * 
+     * Serializes a Map to IodxEntity with all elements represented as Tuple.
+     * Empty maps use an internal entity marker so reference tracking can wrap them.
      * @param map the Map to serialize
-     * @return IodxEntity with serialized key-value pairs as Tuples, or the Map itself if empty
+     * @return IodxEntity with serialized key-value pairs as Tuples
      */
-    private Object serializeMap(Map<?, ?> map) {
+    private IodxEntity serializeMap(Map<?, ?> map) {
         if (map.isEmpty()) {
-            // Return the map directly so IodxPrinter can print it as (=)
-            return map;
+            return new IodxEntity(EMPTY_MAP_ENTITY_NAME, al());
         }
         
         YList<Object> serializedChildren = al();
@@ -240,6 +234,10 @@ public class IodxJavaToEntity {
                 tuple.a.children = al(tuple.b, copy);
             }
         }
+    }
+
+    static boolean isEmptyMapEntity(IodxEntity entity) {
+        return EMPTY_MAP_ENTITY_NAME.equals(entity.name) && entity.children.isEmpty();
     }
 
     public IodxJavaToEntity setSkipDefaultValues(boolean skipDefaultValues) {

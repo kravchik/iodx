@@ -182,6 +182,7 @@ public class IodxPrinter {
         } else if (obj instanceof IodxEntity) {
             // IodxEntity -> named or unnamed class
             IodxEntity entity = (IodxEntity) obj;
+            if (IodxJavaToEntity.isEmptyMapEntity(entity)) return al("(=)");
             YList<Object> children = entity.children;
             if (entity.name == null) {
                 // Unnamed class
