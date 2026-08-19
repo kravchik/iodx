@@ -31,6 +31,18 @@ public class TestIodxCstParser {
         assertEquals("End offset should match", expectedEnd, cst.caret.endOffset);
     }
 
+    private void assertIntegerLiteral(String input, Object expected) {
+        IodxCst result = parseList(input);
+        assertEquals("Should have one child", 1, result.children.size());
+        IodxCst child = result.children.first();
+        assertCstType("INTEGER_LITERAL", child);
+        assertEquals(expected, child.value);
+    }
+
+    private void assertInvalidIntegerLiteral(String input) {
+        assertThrows(ParseException.class, () -> parseList(input));
+    }
+
     @Test
     public void testEmptyListBody() {
         IodxCst result = parseList("");
@@ -309,6 +321,58 @@ public class TestIodxCstParser {
         assertCstType("FLOATING_POINT_LITERAL", child);
         assertCstPosition(child, 0, 6); // "1.5e10" positions 0-6
         assertEquals("Scientific notation should be parsed correctly", 1.5e10f, (Float)child.value, 1000f);
+    }
+
+    @Test
+    public void testDecimalIntegerBoundaries() {
+        assertIntegerLiteral("0", 0);
+        assertIntegerLiteral("2147483647", Integer.MAX_VALUE);
+        assertIntegerLiteral("-2147483648", Integer.MIN_VALUE);
+        assertIntegerLiteral("9223372036854775807L", Long.MAX_VALUE);
+        assertIntegerLiteral("-9223372036854775808l", Long.MIN_VALUE);
+
+        assertInvalidIntegerLiteral("2147483648");
+        assertInvalidIntegerLiteral("-2147483649");
+        assertInvalidIntegerLiteral("9223372036854775808L");
+        assertInvalidIntegerLiteral("-9223372036854775809L");
+    }
+
+    @Test
+    public void testHexIntegerLiterals() {
+        assertIntegerLiteral("0x0", 0);
+        assertIntegerLiteral("0xff", 255);
+        assertIntegerLiteral("0XCAFE", 0xCAFE);
+        assertIntegerLiteral("0x7fffffff", Integer.MAX_VALUE);
+        assertIntegerLiteral("-0X80000000", Integer.MIN_VALUE);
+        assertIntegerLiteral("0x7fffffffffffffffL", Long.MAX_VALUE);
+        assertIntegerLiteral("-0X8000000000000000l", Long.MIN_VALUE);
+    }
+
+    @Test
+    public void testInvalidHexIntegerLiterals() {
+        assertInvalidIntegerLiteral("0x");
+        assertInvalidIntegerLiteral("-0x");
+        assertInvalidIntegerLiteral("0xG");
+        assertInvalidIntegerLiteral("0x1G");
+        assertInvalidIntegerLiteral("0x80000000");
+        assertInvalidIntegerLiteral("-0x80000001");
+        assertInvalidIntegerLiteral("0x8000000000000000L");
+        assertInvalidIntegerLiteral("-0x8000000000000001L");
+    }
+
+    @Test
+    public void testOctalAndLeadingZeroIntegersAreRejected() {
+        assertInvalidIntegerLiteral("00");
+        assertInvalidIntegerLiteral("010");
+        assertInvalidIntegerLiteral("-010");
+        assertInvalidIntegerLiteral("077L");
+        assertInvalidIntegerLiteral("08");
+    }
+
+    @Test
+    public void testHexIntegersPrintAsCanonicalDecimal() {
+        assertEquals("255", new IodxPrinter().print(parseList("0xFF")));
+        assertEquals("255l", Iodx.printIodxEntity(Iodx.readIodxEntity("0xFFL")));
     }
 
     @Test
