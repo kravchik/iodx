@@ -40,7 +40,7 @@ public class TestIodxUnicodeEscapes {
     public void testUnicodeEscapesAreLimitedToQuotedStrings() {
         String escapedA = unicodeEscape("0041");
         IodxCst comment = IodxCstParser.parse("// " + escapedA).children.first();
-        assertEquals("// " + escapedA, comment.value);
+        assertEquals(" " + escapedA, comment.value);
 
         assertThrows(ParseException.class, () -> IodxCstParser.parse(escapedA));
     }

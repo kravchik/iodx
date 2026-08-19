@@ -113,7 +113,7 @@ public class IodxPrinter {
             
             case "COMMENT_SINGLE_LINE":
                 return al("//" + getTokenText(cst));
-            
+
             case "COMMENT_MULTI_LINE":
                 return al("/*" + getTokenText(cst) + "*/");
             
@@ -233,23 +233,9 @@ public class IodxPrinter {
     
     private String formatFloatingPoint(Object value) {
         if (value instanceof Float) {
-            // Float is the default type, no suffix needed
-            float f = (Float) value;
-            String str = String.format("%.6g", f);
-            // Remove trailing zeros and unnecessary decimal point
-            if (str.contains(".")) {
-                str = str.replaceAll("0+$", "").replaceAll("\\.$", "");
-            }
-            return str;
+            return Float.toString((Float) value);
         } else if (value instanceof Double) {
-            // Double needs 'd' suffix to distinguish from Float
-            double d = (Double) value;
-            String str = String.format("%.15g", d);
-            // Remove trailing zeros and unnecessary decimal point
-            if (str.contains(".")) {
-                str = str.replaceAll("0+$", "").replaceAll("\\.$", "");
-            }
-            return str + "d";
+            return Double.toString((Double) value) + "d";
         }
         return value.toString();
     }

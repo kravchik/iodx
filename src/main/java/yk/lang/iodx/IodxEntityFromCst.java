@@ -43,13 +43,10 @@ public class IodxEntityFromCst {
                     node.caret);
                 
             case "COMMENT_SINGLE_LINE":
-                // Convert to IodxComment - remove "//" prefix
-                return new IodxEntity.IodxComment(true, node.value.toString().substring(2));
+                return new IodxEntity.IodxComment(true, node.value.toString());
                 
             case "COMMENT_MULTI_LINE":
-                // Convert to IodxComment - remove "/*" and "*/" 
-                String multiLineText = node.value.toString();
-                return new IodxEntity.IodxComment(false, multiLineText.substring(2, multiLineText.length() - 2));
+                return new IodxEntity.IodxComment(false, node.value.toString());
                 
             case "INTEGER_LITERAL":
             case "FLOATING_POINT_LITERAL":

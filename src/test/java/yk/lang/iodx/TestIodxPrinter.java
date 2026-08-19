@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import static org.junit.Assert.*;
@@ -84,6 +85,78 @@ public class TestIodxPrinter {
         String outputStr = output.print(result);
         
         assertEquals("2.71d", outputStr.trim());
+    }
+
+    @Test
+    public void testCstCommentsKeepSinglePairOfDelimiters() {
+        assertEquals("// comment", printParsedCst("// comment"));
+        assertEquals("/* comment */", printParsedCst("/* comment */"));
+
+        IodxPrinter printer = new IodxPrinter();
+        assertEquals("// generated", printer.print(new IodxCst("COMMENT_SINGLE_LINE", null, " generated")));
+        assertEquals("/* generated */", printer.print(new IodxCst("COMMENT_MULTI_LINE", null, " generated ")));
+    }
+
+    @Test
+    public void testCstFloatingPointOutputIsLocaleIndependent() {
+        Locale originalLocale = Locale.getDefault();
+        try {
+            for (Locale locale : Arrays.asList(Locale.US, Locale.GERMANY)) {
+                Locale.setDefault(locale);
+                assertEquals("3.14", printFloatingPointCst(3.14f));
+                assertEquals("2.71d", printFloatingPointCst(2.71d));
+            }
+        } finally {
+            Locale.setDefault(originalLocale);
+        }
+    }
+
+    @Test
+    public void testCstFloatOutputRoundTripsExactly() {
+        float[] values = {
+                0.0f, -0.0f,
+                Float.MIN_VALUE, -Float.MIN_VALUE,
+                Float.MIN_NORMAL,
+                Float.MAX_VALUE, -Float.MAX_VALUE,
+                0.1f,
+                Float.intBitsToFloat(0x3f9e0652)
+        };
+
+        for (float value : values) assertFloatRoundTrip(value);
+    }
+
+    @Test
+    public void testCstDoubleOutputRoundTripsExactly() {
+        double[] values = {
+                0.0d, -0.0d,
+                Double.MIN_VALUE, -Double.MIN_VALUE,
+                Double.MIN_NORMAL,
+                Double.MAX_VALUE, -Double.MAX_VALUE,
+                0.1d,
+                Double.longBitsToDouble(0x3ff3c0ca428c59fbL)
+        };
+
+        for (double value : values) assertDoubleRoundTrip(value);
+    }
+
+    private static String printParsedCst(String source) {
+        return new IodxPrinter().print(IodxCstParser.parse(source));
+    }
+
+    private static String printFloatingPointCst(Number value) {
+        return new IodxPrinter().print(new IodxCst("FLOATING_POINT_LITERAL", null, value));
+    }
+
+    private static void assertFloatRoundTrip(float expected) {
+        Object actual = IodxCstParser.parse(printFloatingPointCst(expected)).children.get(0).value;
+        assertTrue("Expected Float, got " + actual.getClass(), actual instanceof Float);
+        assertEquals(Float.floatToRawIntBits(expected), Float.floatToRawIntBits((Float) actual));
+    }
+
+    private static void assertDoubleRoundTrip(double expected) {
+        Object actual = IodxCstParser.parse(printFloatingPointCst(expected)).children.get(0).value;
+        assertTrue("Expected Double, got " + actual.getClass(), actual instanceof Double);
+        assertEquals(Double.doubleToRawLongBits(expected), Double.doubleToRawLongBits((Double) actual));
     }
 
     @Test

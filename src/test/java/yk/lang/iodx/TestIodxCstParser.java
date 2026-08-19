@@ -248,12 +248,14 @@ public class TestIodxCstParser {
         IodxCst comment = result.children.get(0);
         assertCstType("COMMENT_SINGLE_LINE", comment);
         assertCstPosition(comment, 0, 19); // "//this is a comment" positions 0-19
+        assertEquals("this is a comment", comment.value);
 
         // Multi-line comment
         result = parseList("/*multi line comment*/");
         comment = result.children.get(0);
         assertCstType("COMMENT_MULTI_LINE", comment);
         assertCstPosition(comment, 0, 22); // "/*multi line comment*/" positions 0-22
+        assertEquals("multi line comment", comment.value);
 
         // Comment with other elements
         result = parseList("value //comment");

@@ -208,9 +208,14 @@ IodxCst parseElement() #void :
   |
     node = parseUnnamedClass(null) { return node; }
   |
-    t = <COMMENT_SINGLE_LINE> { return new IodxCst("COMMENT_SINGLE_LINE", createCaret(t), t.toString()); }
+    t = <COMMENT_SINGLE_LINE> {
+        return new IodxCst("COMMENT_SINGLE_LINE", createCaret(t), t.toString().substring(2));
+    }
   |
-    t = <COMMENT_MULTI_LINE> { return new IodxCst("COMMENT_MULTI_LINE", createCaret(t), t.toString()); }
+    t = <COMMENT_MULTI_LINE> {
+        String text = t.toString();
+        return new IodxCst("COMMENT_MULTI_LINE", createCaret(t), text.substring(2, text.length() - 2));
+    }
   |
     t = <INTEGER_LITERAL> {
         return new IodxCst("INTEGER_LITERAL", createCaret(t), parseIntegerLiteral(t));
