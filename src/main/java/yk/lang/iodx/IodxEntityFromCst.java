@@ -64,7 +64,7 @@ public class IodxEntityFromCst {
     }
 
     /**
-     * Converts a list of IodxCst nodes, handling the special case of 'a = b' -> Tuple conversion.
+     * Converts a list of IodxCst nodes, turning {@code a = b} into a Tuple.
      */
     public static YList<Object> translate(YList<IodxCst> nodes) {
         return resolveKeyValuesWithCaretsFromNodes(nodes, null, null).children;
@@ -84,7 +84,7 @@ public class IodxEntityFromCst {
 
     /**
      * Converts a list of IodxCst nodes, collecting both resolved objects and their carets.
-     * This is the primary implementation that handles the full 'a = b' -> Tuple conversion logic
+     * This is the primary implementation that handles the full {@code a = b} to Tuple conversion logic
      * while also collecting caret positions for each resolved element.
      * Returns a IodxEntity with the specified name, caret, and children with their carets.
      */
