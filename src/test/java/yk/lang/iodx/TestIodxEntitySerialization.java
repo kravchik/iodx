@@ -71,6 +71,9 @@ public class TestIodxEntitySerialization {
 
         testStrings("hello", "hello", "\"hello\"", "'hello'");
         testStrings("hello world", "'hello world'", "\"hello world\"");
+        testStrings("=", "'='", "\"=\"");
+        testStrings("//comment", "'//comment'", "\"//comment\"");
+        testStrings("/*comment*/", "'/*comment*/'", "\"/*comment*/\"");
     }
 
     private static void testObj(Object expected, String s) {

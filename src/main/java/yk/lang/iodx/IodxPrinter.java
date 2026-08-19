@@ -1,7 +1,7 @@
 package yk.lang.iodx;
 
 import yk.lang.iodx.congocc.IodxCstLexer;
-import yk.lang.iodx.congocc.IodxCstParser;
+import yk.lang.iodx.congocc.Token;
 import yk.lang.iodx.utils.BadException;
 import yk.lang.iodx.utils.IodxEscapeUtils;
 import yk.ycollections.Tuple;
@@ -68,11 +68,19 @@ public class IodxPrinter {
     }
 
     public boolean withoutQuotes(String value) {
-        try {
-            Object would = new IodxCstParser(new IodxCstLexer(value)).parseElement().value;
-            if (value.equals(would)) return true;
-        } catch (Exception | Error ignore) {}
-        return false;
+        Token token = new IodxCstLexer(value).getNextToken(null);
+        if (token.getEndOffset() != value.length()) return false;
+
+        switch (token.getType()) {
+            case ANY_LITERAL:
+                return !"true".equals(value) && !"false".equals(value) && !"null".equals(value);
+            case ANY_OPERATOR:
+                return !IodxEntityFromCst.DELIMITER.equals(value);
+            case ANY_SEPARATOR:
+                return true;
+            default:
+                return false;
+        }
     }
 
     public String print(IodxCst cst) {

@@ -16,6 +16,28 @@ import static yk.ycollections.YArrayList.al;
 public class TestIodxPrinter {
 
     @Test
+    public void testWithoutQuotesOnlyForStandaloneStringTokens() {
+        IodxPrinter printer = new IodxPrinter();
+
+        assertTrue(printer.withoutQuotes("hello"));
+        assertTrue(printer.withoutQuotes("+"));
+        assertTrue(printer.withoutQuotes("=="));
+        assertTrue(printer.withoutQuotes(","));
+        assertTrue(printer.withoutQuotes(";"));
+
+        assertFalse(printer.withoutQuotes(""));
+        assertFalse(printer.withoutQuotes("hello world"));
+        assertFalse(printer.withoutQuotes("true"));
+        assertFalse(printer.withoutQuotes("false"));
+        assertFalse(printer.withoutQuotes("null"));
+        assertFalse(printer.withoutQuotes("42"));
+        assertFalse(printer.withoutQuotes("3.14"));
+        assertFalse(printer.withoutQuotes("="));
+        assertFalse(printer.withoutQuotes("//comment"));
+        assertFalse(printer.withoutQuotes("/*comment*/"));
+    }
+
+    @Test
     public void testIntegerOutput() throws Exception {
         IodxCstParser parser = new IodxCstParser("42");
         IodxCst result = parser.parseListBody();
