@@ -3,7 +3,11 @@ package yk.lang.iodx;
 import org.junit.Test;
 import yk.lang.iodx.congocc.IodxCstParser;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.*;
@@ -173,6 +177,23 @@ public class TestIodxPrinter {
 
         assertEquals("(1 (hello ; 3) 4)", output.print(al(1, al("hello", ";", 3), 4)).trim());
         assertEquals("(1 (hello ; +) 4)", output.print(al(1, al("hello", ";", "+"), 4)).trim());
+    }
+
+    @Test
+    public void testJavaListImplementationsSerialization() {
+        assertListSerialization(new ArrayList<Object>());
+        assertListSerialization(new LinkedList<Object>());
+        assertListSerialization(al());
+    }
+
+    private void assertListSerialization(List<Object> list) {
+        IodxPrinter output = new IodxPrinter();
+        assertEquals("()", output.print(list).trim());
+
+        list.add(1);
+        list.add(Arrays.asList(2, 3));
+        list.add(4);
+        assertEquals("(1 (2 3) 4)", output.print(list).trim());
     }
 
     @Test

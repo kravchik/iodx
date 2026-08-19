@@ -91,7 +91,7 @@ public class IodxPrinter {
         return printObject(0, obj).toString("\n");
     }
 
-    public String printBody(YList elements) {
+    public String printBody(List<?> elements) {
         return printObjectList(elements, 0, null, null, false).toString("\n");
     }
 
@@ -143,7 +143,7 @@ public class IodxPrinter {
         if (obj instanceof IodxCst) {
             return printCst(startAt, (IodxCst) obj);
         } else if (obj instanceof List) {
-            return printObjectList((YList) obj, startAt, "(", ")", true);
+            return printObjectList((List<?>) obj, startAt, "(", ")", true);
         } else if (obj instanceof Map) {
             // Map -> unnamed class with key = value pairs
             Map<?, ?> map = (Map<?, ?>) obj;
@@ -257,14 +257,14 @@ public class IodxPrinter {
 
     private int level = 0;
 
-    private YList<String> printObjectList(YList objects, int startAt, String l1, String ln, boolean addTabs) {
+    private YList<String> printObjectList(List<?> objects, int startAt, String l1, String ln, boolean addTabs) {
         level++;
         YList<String> res = printObjectListImp(objects, startAt, l1, ln, addTabs);
         level--;
         return res;
     }
 
-    private YList<String> printObjectListImp(YList<Object> objects, int startAt, String l1, String ln, boolean addTabs) {
+    private YList<String> printObjectListImp(List<?> objects, int startAt, String l1, String ln, boolean addTabs) {
         if ((l1 == null) != (ln == null)) BadException.die("Both prefix and suffix should either null, or not");
         boolean tryCompact = true;
         YList<String> cc = al();
