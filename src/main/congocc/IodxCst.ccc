@@ -2,12 +2,12 @@
 
 PARSER_PACKAGE = yk.lang.iodx.congocc;
 NODE_PACKAGE = yk.lang.iodx.congocc.nodes;
-JAVA_UNICODE_ESCAPE = true;
+JAVA_UNICODE_ESCAPE = false;
 TREE_BUILDING_ENABLED = false;
 
 INJECT IodxCstLexer : {
     public IodxCstLexer(String inputSource, CharSequence input, LexicalState lexState, int startingLine, int startingColumn, boolean preserveLineEndings) {
-        super(inputSource, input, startingLine, startingColumn, 1, true, preserveLineEndings, true, "");
+        super(inputSource, input, startingLine, startingColumn, 1, true, preserveLineEndings, false, "");
         if (lexicalState != null) switchTo(lexState);
     }
 }
@@ -19,6 +19,7 @@ INJECT IodxCstParser : {
     import yk.lang.iodx.utils.Caret;
     import yk.lang.iodx.IodxCst;
     import yk.ycollections.YMap;
+    import yk.lang.iodx.utils.IodxEscapeException;
     import yk.lang.iodx.utils.IodxEscapeUtils;
 }
 
@@ -33,7 +34,7 @@ INJECT IodxCstParser :
         //NOTE ! Should use special constructor with preserveLineEndings == true to properly handle \r
         //  (we are getting rid of \r instead of converting it to \n)
         IodxCstParser parser = new IodxCstParser(new IodxCstLexer("input", s, IodxCstLexer.LexicalState.DEFAULT, 1, 1, true));
-        return parser.parseListBody();
+        return parser.parseDocument();
     }
 
     private YList<Caret> caretStack = al();
@@ -80,6 +81,19 @@ INJECT IodxCstParser :
             token.getBeginOffset(), token.getEndOffset()
         );
     }
+
+    private String unescapeString(Token token) {
+        try {
+            return IodxEscapeUtils.unescapeQuoted(token.toString());
+        } catch (IodxEscapeException e) {
+            int beginOffset = token.getBeginOffset() + 1 + e.offset;
+            int contentEndOffset = token.getEndOffset() - 1;
+            int endOffset = Math.min(contentEndOffset, beginOffset + e.length);
+            Token errorToken = Token.newToken(
+                Token.TokenType.INVALID, token.getTokenSource(), beginOffset, Math.max(beginOffset + 1, endOffset));
+            throw new ParseException(e.getMessage() + " at offset " + beginOffset, errorToken, null);
+        }
+    }
 }
 
 
@@ -121,7 +135,16 @@ TOKEN :
 ;
 
 
-// Main API method - parses list body (sequence of elements)
+// Strict top-level API: parse the complete document without trailing input
+IodxCst parseDocument() #void :
+{
+    IodxCst document;
+}
+    document = parseListBody()
+    <EOF>
+    { return document; }
+;
+
 IodxCst parseListBody() #void :
 {
     YList<IodxCst> list;
@@ -202,12 +225,12 @@ IodxCst parseElement() #void :
   |
     t = <STRING_LITERAL_DQ> {
         return new IodxCst("STRING_LITERAL_DQ", createCaret(t), 
-            IodxEscapeUtils.unescapeDoubleQuotes(t.toString()));
+            unescapeString(t));
     }
   |
     t = <STRING_LITERAL_SQ> { 
         return new IodxCst("STRING_LITERAL_SQ", createCaret(t), 
-            IodxEscapeUtils.unescapeSingleQuotes(t.toString()));
+            unescapeString(t));
     }
 ;
 

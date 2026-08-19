@@ -2,6 +2,8 @@ package yk.lang.iodx;
 
 import org.junit.Test;
 import yk.lang.iodx.congocc.IodxCstParser;
+import yk.lang.iodx.congocc.ParseException;
+import yk.lang.iodx.congocc.Token;
 
 import static org.junit.Assert.*;
 
@@ -485,6 +487,21 @@ public class TestIodxCstParser {
         assertEquals("hello", result.children.get(0).value);
         assertEquals(42, result.children.get(1).value);
         assertEquals(Boolean.TRUE, result.children.get(2).value);
+    }
+
+    @Test
+    public void testDocumentParseRequiresEndOfInputButListBodyCanParsePrefix() {
+        String input = "hello ) ignored";
+
+        ParseException error = assertThrows(ParseException.class, () -> IodxCstParser.parse(input));
+        assertNotNull(error.getToken());
+        assertEquals(Token.TokenType.RIGHT_PAREN, error.getToken().getType());
+        assertEquals(6, error.getToken().getBeginOffset());
+        assertEquals(7, error.getToken().getEndOffset());
+
+        IodxCst prefix = new IodxCstParser(input).parseListBody();
+        assertEquals(1, prefix.children.size());
+        assertEquals("hello", prefix.children.first().value);
     }
 
     @Test
