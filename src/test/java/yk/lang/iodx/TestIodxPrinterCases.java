@@ -21,6 +21,10 @@ import static yk.ycollections.YHashSet.hs;
 public class TestIodxPrinterCases {
     private static final YSet<String> INT_SETTINGS = hs("maxWidth", "maxLocalWidth", "compactFromLevel");
 
+    private enum ScanState {
+        NORMAL, SINGLE_QUOTED, DOUBLE_QUOTED, LINE_COMMENT, BLOCK_COMMENT
+    }
+
     @Test
     public void testCases() {
         YMap<String, Integer> settings = INT_SETTINGS.toMap(s -> s, s -> Reflector.get(new IodxPrinter(), s));
@@ -32,25 +36,79 @@ public class TestIodxPrinterCases {
                 if (INT_SETTINGS.contains(t.a)) settings.put((String) t.a, extractInt(t));
                 else BadException.notImplemented(o + "");
             } else if (o instanceof String) {
-                String s = (String) o;
-                //IodxEntityOutput output = new IodxEntityOutput();
-                //for (Map.Entry<String, Integer> entry : settings.entrySet()) {
-                //    Reflector.set(output, entry.getKey(), entry.getValue());
-                //}
-                IodxPrinter cstOutput = new IodxPrinter();
-                for (Map.Entry<String, Integer> entry : settings.entrySet()) {
-                    Reflector.set(cstOutput, entry.getKey(), entry.getValue());
+                String canonical = (String) o;
+                assertEquals("Canonical formatting should be stable", canonical, format(canonical, settings));
+
+                String[] variants = {
+                    replaceWhitespaceOutsideLiteralsAndComments(canonical, " "),
+                    replaceWhitespaceOutsideLiteralsAndComments(canonical, "\n    ")
+                };
+                for (int i = 0; i < variants.length; i++) {
+                    assertEquals("Whitespace variant " + (i + 1) + " should use canonical formatting",
+                        canonical, format(variants[i], settings));
                 }
-
-                //javacc stack
-                //assertEquals(s, "\n" + output.print(IodxEntityResolver.toIodxList(IodxObjectParser.parse(s).getNodeList(ARGS)).assertSize(1).first()) + "\n");
-
-                //congocc stack
-                System.out.println(s);
-                assertEquals(s, "\n" + cstOutput.print(IodxEntityFromCst.translate(IodxCstParser.parse(s).children)
-                    .assertSize(1).first()) + "\n");
             }
         }
+    }
+
+    private static String format(String source, YMap<String, Integer> settings) {
+        IodxPrinter printer = new IodxPrinter();
+        for (Map.Entry<String, Integer> entry : settings.entrySet()) {
+            Reflector.set(printer, entry.getKey(), entry.getValue());
+        }
+        Object entity = IodxEntityFromCst.translate(IodxCstParser.parse(source).children)
+            .assertSize(1).first();
+        return "\n" + printer.print(entity) + "\n";
+    }
+
+    private static String replaceWhitespaceOutsideLiteralsAndComments(String text, String replacement) {
+        StringBuilder result = new StringBuilder();
+        ScanState state = ScanState.NORMAL;
+
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+
+            if (state == ScanState.SINGLE_QUOTED || state == ScanState.DOUBLE_QUOTED) {
+                result.append(c);
+                if (c == '\\' && i + 1 < text.length()) result.append(text.charAt(++i));
+                else if (state == ScanState.SINGLE_QUOTED && c == '\'') state = ScanState.NORMAL;
+                else if (state == ScanState.DOUBLE_QUOTED && c == '"') state = ScanState.NORMAL;
+                continue;
+            }
+
+            if (state == ScanState.LINE_COMMENT) {
+                result.append(c);
+                if (c == '\n' || c == '\r') state = ScanState.NORMAL;
+                continue;
+            }
+
+            if (state == ScanState.BLOCK_COMMENT) {
+                result.append(c);
+                if (c == '*' && i + 1 < text.length() && text.charAt(i + 1) == '/') {
+                    result.append(text.charAt(++i));
+                    state = ScanState.NORMAL;
+                }
+                continue;
+            }
+
+            if (c == '\'' || c == '"') {
+                state = c == '\'' ? ScanState.SINGLE_QUOTED : ScanState.DOUBLE_QUOTED;
+                result.append(c);
+            } else if (c == '/' && i + 1 < text.length() && text.charAt(i + 1) == '/') {
+                state = ScanState.LINE_COMMENT;
+                result.append(c).append(text.charAt(++i));
+            } else if (c == '/' && i + 1 < text.length() && text.charAt(i + 1) == '*') {
+                state = ScanState.BLOCK_COMMENT;
+                result.append(c).append(text.charAt(++i));
+            } else if (Character.isWhitespace(c)) {
+                while (i + 1 < text.length() && Character.isWhitespace(text.charAt(i + 1))) i++;
+                result.append(replacement);
+            } else {
+                result.append(c);
+            }
+        }
+
+        return result.toString();
     }
 
     private static int extractInt(Tuple t) {

@@ -64,6 +64,12 @@ public class TestIodxJavaSerialization {
         roundTripAssert(original, expectedSerialized, new Class<?>[0]);
     }
 
+    private static void assertReads(Object expected, String... sources) {
+        for (String source : sources) {
+            assertEquals("Unexpected Java value for IODX: " + source, expected, Iodx.readJava(source));
+        }
+    }
+
     private static boolean hasMessageInCauseChain(Throwable throwable, String expectedPart) {
         while (throwable != null) {
             if (throwable.getMessage() != null && throwable.getMessage().contains(expectedPart)) return true;
@@ -104,6 +110,23 @@ public class TestIodxJavaSerialization {
         resolved = IodxEntityFromCst.translate(parsed.children).get(0);
         charResult = deserializer.deserialize(resolved);
         assertEquals("Space character should become string", " ", charResult);
+    }
+
+    @Test
+    public void testDeserializationSyntaxVariants() {
+        assertReads(5, "5");
+        assertReads(5.0f, "5.0", "5f", "5F", "5.0f", "5.0F", "5e0");
+        assertReads(5.0d, "5d", "5D");
+
+        assertReads(al(), "()");
+        assertReads(hm("a", "b"), "(a=b)");
+        assertReads(al(1, 2, 3), "(1 2 3)");
+        assertReads(al("a"), "(a)", "( a )", "( 'a' )", "( \"a\" )", "\n(\na\n)\n");
+
+        assertReads(al(al(), "a", "b"), "(() a b)");
+        assertReads(al("a", "b", al()), "(a b ())");
+        assertReads(al(al(al())), "((()))");
+        assertReads(al(al(), al()), "(() ())", "( () () )");
     }
     
     @Test
