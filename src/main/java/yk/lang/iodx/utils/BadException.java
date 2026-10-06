@@ -7,7 +7,7 @@ package yk.lang.iodx.utils;
  * Time: 20:39
  * <p>
  * COPY OF one from yincubator
- * TODO YadsException
+ * TODO IodxException
  */
 public class BadException extends RuntimeException {
     public BadException() {

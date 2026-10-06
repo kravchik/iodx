@@ -1,92 +1,51 @@
-# TODO: update
+# Why another data syntax?
 
-### Why yet another data syntax?
+IODX is intended for structured data that people regularly read and edit: configuration, fixtures, examples, logs, and serialized object graphs.
 
-* no white-space indentation and mandatory new lines like in YAML
-* no mandatory `""` like in json
-* can use `""`  and `''` interchangeably
-* can use new-lines in `""` or `''` strings
-* no commas
-* not verbose like xml with the same capabilities
-* built-in serialization/deserialization
-* serialization to beautifully formatted text
-* comments (both one-liners and multi-liners)  
+## Structure without indentation rules
 
-#### no white-space indentation and mandatory new lines like in YAML
-Same as in JSON. One can write the whole file in one line. It is very useful when you want to write your data in a string inside your code or in the command line. Also, very convenient if you want to include parts of the config in some input field, or in an Excel table.
+Unlike YAML, indentation and line breaks are formatting rather than syntax. The same list can be compact or multiline:
 
-In all these cases, white-space indentation would be a pain.
+```iodx
+(a b c)
 
-You can write in both ways:
-```Java
-    (a b c)
-    
-    (
-        a
-        b
-        c
-    )
+(
+  a
+  b
+  c
+)
 ```
 
-#### no commas or semicolons
-  You don't need to bother about them when adding or removing elements.
-  And the noise level is very low.
+This is useful for command-line values, source-code strings, form fields, and spreadsheet cells.
 
-#### no mandatory `""` like in json
-  Which is also reduces noise level.
-  Though you'd need `""` or `''` if a string should include spaces.
-  Also much simpler to define part of the config in the Java String as don't need to constantly escape those quotes.
+## Less punctuation
 
-#### can use `""`  and `''` interchangeably
-  First of all, it is slightly simpler to use `'` instead of `"`. Second - in Java, you don't need to escape `'` in strings. Third - you can choose `'` when `"` prevails in your text and vice versa (You'd have to escape `"` symbol in a string like `"quote: \" "`).
+IODX does not require commas or semicolons between elements. Simple strings do not require quotes, while single and double quotes remain available for whitespace and syntax characters.
 
-If you need to write something in Java code (for test purposes, or to make a request, for example), IODX seems the most easily writeable and readable.
-```  
-        String exampleJson = "{\"type\":\"VBox\",\"key\":\"value\",\"name\":\"Hello World\"}";
-        String exampleYaml = "    type: VBox\n    key: value\n    name: Hello World\n";
-        String exampleYads = "(type=VBox key=value name='Hello World')";
+```java
+String exampleJson = "{\"type\":\"VBox\",\"key\":\"value\",\"name\":\"Hello World\"}";
+String exampleYaml = "type: VBox\nkey: value\nname: Hello World\n";
+String exampleIodx = "(type=VBox key=value name='Hello World')";
 ```
-  
-#### can use new-lines in `""` or `''` strings
-  Like in YML
-#### not verbose like xml with the same capabilities
-  So you can write like:
-```Java
+
+Both quote styles support literal newlines, which keeps longer text readable without YAML block-scalar rules.
+
+## Named entities
+
+Named entities preserve structure without repeating XML-style closing tags or introducing a separate `type` field:
+
+```iodx
 HBox(
-  pos=(100 200)
+  pos = (100 200)
   VBox(
-    Input(hint='...input here')
-    Button(text='Send')
+    Input(hint = '...input here')
+    Button(text = Send)
   )
 )
 ```
-  Instead of something like:
-```XML
-<HBox pos="100 200">
-  <VBox>
-    <Input hint="...input here"/>
-    <Button text="Send"/>
-  </VBox>
-</HBox>
-```
 
-#### built-in serialization/deserialization
-  Currently - Java only, but syntax provides ways to other languages to be included.
-  Serialize any data to the human-readable string, and then back to the same data without any additional effort.
-  No annotations needed.
-  
-#### serialization to beautifully formatted text
-  1. convenient to read and edit
-  1. can be used for reporting of data (tests)
-  1. can be used to generate configs, not only read them
+## Java mapping and formatting
 
-#### comments (both one-liners and multi-liners)  
+The Java implementation maps IODX to primitives, collections, and registered classes without annotations. Its printer can produce compact or multiline canonical text, while references preserve shared and cyclic object identity.
 
-#### Can be conveniently used for
-  1. simple properties file
-  1. config (with both read and wright)
-  1. serialization in human-readable form
-
-#### UTF, symbol escaping
-
-
+IODX also retains single-line and block comments in its syntax model. See [serialization.md](serialization.md) for the exact mapping rules and current limitations.

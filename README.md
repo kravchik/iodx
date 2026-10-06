@@ -2,7 +2,7 @@
 
 **Input Output Data syntaX**
 
-IODX is a compact, human-readable syntax for any structured data. It is like JSON or YAML, but better.
+IODX is a compact, human-readable syntax for structured data, configs, fixtures, serialization, and data exchange. It keeps JSON-like structure without mandatory commas or quotes and does not use indentation as syntax.
 
 * Main site: [iodx.org](https://iodx.org)
 * Java implementation: [kravchik/iodx](https://github.com/kravchik/iodx)
@@ -10,53 +10,52 @@ IODX is a compact, human-readable syntax for any structured data. It is like JSO
 ## Features
 
 * no commas
-* no white-space indentation or mandatory new lines
-* quotes can be omitted in keys and values (if the string is simple)
-* lists, maps, entities, primitives
-* can use `""`  or `''`
-* any quoted string supports new lines
-* escaping in any quoted string, and it is optional (except `\` and relevant quote)
-* comments `//` and `/* */`
+* no whitespace indentation or mandatory line breaks
+* quotes can be omitted in keys and values when the string is simple
+* lists, maps, entities, and primitives
+* both `""` and `''` can be used for quoted strings
+* any quoted string can span multiple lines
+* escape sequences are supported in both quoted forms; only backslashes and the matching quote must be escaped
+* comments with `//` and `/* */`
 
 ## Syntax
 
-```text
+```iodx
 // list
 (string 'quoted string' 123)
 
 // maps
-usualMap = (key=value 'quoted key'="quoted value")
-emptMap = (=)
+usualMap = (key = value 'quoted key' = "quoted value")
+emptyMap = (=)
 
-// entity
-entity(key=values and some list also)
+// named entity: no whitespace between the name and "("
+entity(key = value and some list also)
 
 // strings
-can_be_unquoted 
+can_be_unquoted
 
-'single quoted do not need to escape "double" quotes, but \"can do so\"'
+'single quotes can contain "double quotes" without escaping'
+"double quotes can contain 'single quotes' without escaping"
 
-"double quoted do not need to escape 'single' quotes, but also \'can\'"
-
-'any string
+'any quoted string
 can have new lines
 in it'
 
-"escaping is useful\s\s
-and it is optional\n\n
-except for \\ and \" "
+"escapes include \t, \n, \s, \\, and \u263A"
 
-// other primitives
-numbers = (123 1.23f -12.3d etc)
+// numbers, booleans, and null
+numbers = (123 -42 0xFF 123L 1.23 1.23f -12.3d 1e3)
 booleans = (true false)
-nulls = null
+noValue = null
 ```
 
-## Example
-        
-Some UI config in IODX
+More precise rules for numbers, strings, Java types, and references are in [serialization.md](serialization.md).
 
-```text
+## Examples
+
+Some hierarchical UI configuration in IODX:
+
+```iodx
 // Some hierarchical UI definition
 HBox(
   pos = (100 200)
@@ -107,7 +106,7 @@ children:
         text: Send
 ```
 
-```text
+```iodx
 // Some config
 serverType = node
 port = 8080
@@ -150,13 +149,13 @@ services:
   - type: AdminService
 ```
 
-```text
+```iodx
 // Some properties
 greeting = 'Hello traveller!'
 
 signature = '
 Have a nice day,
-travaller!
+traveller!
 '
 ```
 
@@ -165,7 +164,7 @@ Roughly the same structure in JSON:
 ```json
 {
   "greeting": "Hello traveller!",
-  "signature": "\nHave a nice day,\ntravaller!\n"
+  "signature": "\nHave a nice day,\ntraveller!\n"
 }
 ```
 
@@ -176,22 +175,34 @@ greeting: Hello traveller!
 signature: |
 
   Have a nice day,
-  travaller!
+  traveller!
 ```
 
-## API
+## Java API
 
-`yk.lang.iodx.Iodx` is an entry point. Look there for common scenarios and exmples.
+`yk.lang.iodx.Iodx` is the entry point for common operations.
 
 ### API features
 
-* reading/writing text/data/classes
-* can read/write one src with one value, or many values
-* printing with tunable formatting
-* comments are first level citizen - add them on writing, or analyze on reading
-* java ser/deser
+* reading and writing text, syntax data, and Java classes
+* reading and writing either one top-level value or multiple values
+* printing with configurable formatting
+* first-class comments that can be created when writing or inspected when reading
+* Java serialization and deserialization
 
-## mvn artifact
+```java
+Object entity = Iodx.readIodxEntity("hello(world)");
+String text = Iodx.printIodxEntity(entity);
+
+Point point = Iodx.readJava(Point.class, "Point(x = 10 y = 20)");
+String serialized = Iodx.printJava(point);
+```
+
+Use `readIodxEntity`/`readIodxEntities` when you need the syntax model, and `readJava`/`printJava` when you need Java object mapping. The `readJavaBody`/`printJavaBody` methods operate on the contents of an object, list, or map without an outer wrapper.
+
+See [serialization.md](serialization.md) for the complete mapping rules and limitations.
+
+## Maven artifact
 
 ```xml
 <repositories>
@@ -208,4 +219,4 @@ signature: |
 </dependency>
 ```
 
-Current development version is `0.5-SNAPSHOT`.
+Current development version is `0.5-SNAPSHOT`. The project targets Java 8 and is tested on newer JDK releases in CI.

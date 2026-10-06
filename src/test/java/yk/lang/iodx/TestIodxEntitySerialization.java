@@ -338,9 +338,9 @@ public class TestIodxEntitySerialization {
 
         Object comment = resolved.get(0);
         assertTrue(comment instanceof IodxEntity.IodxComment);
-        IodxEntity.IodxComment yadsComment = (IodxEntity.IodxComment) comment;
-        assertTrue(yadsComment.isOneLine);
-        assertEquals("this is a comment", yadsComment.text);
+        IodxEntity.IodxComment iodxComment = (IodxEntity.IodxComment) comment;
+        assertTrue(iodxComment.isOneLine);
+        assertEquals("this is a comment", iodxComment.text);
 
         // Test multi-line comment
         parser = new IodxCstParser("/*multi\nline\ncomment*/");
@@ -350,9 +350,9 @@ public class TestIodxEntitySerialization {
 
         comment = resolved.get(0);
         assertTrue(comment instanceof IodxEntity.IodxComment);
-        yadsComment = (IodxEntity.IodxComment) comment;
-        assertFalse(yadsComment.isOneLine);
-        assertEquals("multi\nline\ncomment", yadsComment.text);
+        iodxComment = (IodxEntity.IodxComment) comment;
+        assertFalse(iodxComment.isOneLine);
+        assertEquals("multi\nline\ncomment", iodxComment.text);
 
         assertEquals("IodxComment{isOneLine=true, text=''}", getIodxList("//"));
         testComment("IodxComment{isOneLine=true, text=''}", "//\n");
