@@ -5,7 +5,7 @@ IodxCst parseDocument() #void :
 {
     IodxCst document;
 }
-    document = parseListBody()
+    document = parseListBody
     <EOF>
     { return document; }
 ;
@@ -15,7 +15,7 @@ IodxCst parseListBody() #void :
     Object start = cstBeginNode();
     Object list;
 }
-    list = parseList()
+    list = parseList
     { return cstListBody(start, list); }
 ;
 
@@ -26,10 +26,10 @@ Object parseList() #void :
 }
     [ <WHITE_SPACE> ]
     [
-      value = parseElement() { cstListAdd(list, value); }
+      value = parseElement { cstListAdd(list, value); }
       [ <WHITE_SPACE> ]
       (
-        value = parseElement() { cstListAdd(list, value); }
+        value = parseElement { cstListAdd(list, value); }
         [ <WHITE_SPACE> ]
       )*
     ]
@@ -41,9 +41,9 @@ IodxCst parseElement() #void :
     Token token;
     IodxCst node;
 }
-    node = parseIdentifierOrClass() { return node; }
+    node = parseIdentifierOrClass { return node; }
   |
-    node = parseUnnamedClass(null) { return node; }
+    node = parseUnnamedClass { return node; }
   |
     token = <COMMENT_SINGLE_LINE> { return cstSingleLineComment(token); }
   |
@@ -67,9 +67,17 @@ IodxCst parseIdentifierOrClass() #void :
 {
     Token identifier;
     IodxCst nameNode;
+    IodxCst leftParenNode;
+    IodxCst rightParenNode;
+    IodxCst body;
 }
     identifier = <ANY_LITERAL> { nameNode = cstIdentifier(identifier); }
-    [ nameNode = parseUnnamedClass(nameNode) ]
+    [
+        leftParenNode = parseLeftParen
+        body = parseListBody
+        rightParenNode = parseRightParen
+        { return cstClass(nameNode, leftParenNode, body, rightParenNode); }
+    ]
     { return nameNode; }
 ;
 
@@ -87,17 +95,17 @@ IodxCst parseRightParen() #void :
     token = <RIGHT_PAREN> { return cstStructuralToken("RIGHT_PAREN", token); }
 ;
 
-// Parses a class starting with '(' and an optional name node.
-IodxCst parseUnnamedClass(IodxCst nameNode) #void :
+// Parses a class starting with '(' and no name.
+IodxCst parseUnnamedClass() #void :
 {
     IodxCst leftParenNode;
     IodxCst rightParenNode;
     IodxCst body;
 }
-    leftParenNode = parseLeftParen()
-    body = parseListBody()
-    rightParenNode = parseRightParen()
-    { return cstClass(nameNode, leftParenNode, body, rightParenNode); }
+    leftParenNode = parseLeftParen
+    body = parseListBody
+    rightParenNode = parseRightParen
+    { return cstClass(null, leftParenNode, body, rightParenNode); }
 ;
 
 // Parses either a named or unnamed class, rejecting standalone literals.
@@ -105,7 +113,7 @@ IodxCst parseClass() #void :
 {
     IodxCst node;
 }
-    node = parseIdentifierOrClass() { return cstRequireClass(node); }
+    node = parseIdentifierOrClass { return cstRequireClass(node); }
   |
-    node = parseUnnamedClass(null) { return node; }
+    node = parseUnnamedClass { return node; }
 ;
