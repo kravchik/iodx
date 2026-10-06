@@ -1,0 +1,180 @@
+// Java implementation of the CST construction API used by IodxProductions.inc.ccc.
+
+INJECT IodxCstLexer : {
+    public IodxCstLexer(String inputSource, CharSequence input, LexicalState lexState, int startingLine, int startingColumn, boolean preserveLineEndings) {
+        super(inputSource, input, startingLine, startingColumn, 1, true, preserveLineEndings, false, "");
+        if (lexicalState != null) switchTo(lexState);
+    }
+}
+
+INJECT IodxCstParser : {
+    import yk.ycollections.YList;
+    import static yk.ycollections.YArrayList.al;
+    import static yk.ycollections.YHashMap.hm;
+    import yk.lang.iodx.utils.Caret;
+    import yk.lang.iodx.IodxCst;
+    import yk.ycollections.YMap;
+    import yk.lang.iodx.utils.IodxEscapeException;
+    import yk.lang.iodx.utils.IodxEscapeUtils;
+}
+
+INJECT IodxCstParser :
+{
+    public static IodxCst parse(String source) {
+        // Preserve line endings so offsets continue to refer to the original source.
+        IodxCstLexer lexer = new IodxCstLexer(
+            "input", source, IodxCstLexer.LexicalState.DEFAULT, 1, 1, true);
+        return new IodxCstParser(lexer).parseDocument();
+    }
+
+    private Object cstBeginNode() {
+        Token token = getToken(0);
+        if (token.getType() == Token.TokenType.DUMMY) return new Caret(1, 1, 0, 0, 0, -1);
+        return new Caret(
+            token.getBeginLine(), token.getBeginColumn(),
+            0, 0,
+            token.getBeginOffset(), -1);
+    }
+
+    private Caret cstFinishNode(Object start) {
+        Caret caret = (Caret) start;
+        Token token = getToken(0);
+        if (token != null && token.getType() != Token.TokenType.DUMMY && token.getType() != Token.TokenType.EOF) {
+            caret.endLine = token.getEndLine();
+            caret.endColumn = token.getEndColumn();
+            caret.endOffset = token.getEndOffset();
+        } else {
+            caret.endLine = caret.beginLine;
+            caret.endColumn = caret.beginColumn;
+            caret.endOffset = caret.beginOffset;
+        }
+        return caret;
+    }
+
+    private Caret cstCaret(Token token) {
+        return new Caret(
+            token.getBeginLine(), token.getBeginColumn(),
+            token.getEndLine(), token.getEndColumn(),
+            token.getBeginOffset(), token.getEndOffset());
+    }
+
+    private Object cstNewList() {
+        return al();
+    }
+
+    private void cstListAdd(Object list, Object value) {
+        ((YList<IodxCst>) list).add((IodxCst) value);
+    }
+
+    private IodxCst cstListBody(Object start, Object list) {
+        return new IodxCst("LIST_BODY", cstFinishNode(start), (YList<IodxCst>) list);
+    }
+
+    private IodxCst cstSingleLineComment(Token token) {
+        return new IodxCst(
+            "COMMENT_SINGLE_LINE", cstCaret(token), token.toString().substring(2));
+    }
+
+    private IodxCst cstMultiLineComment(Token token) {
+        String text = token.toString();
+        return new IodxCst(
+            "COMMENT_MULTI_LINE", cstCaret(token), text.substring(2, text.length() - 2));
+    }
+
+    private IodxCst cstInteger(Token token) {
+        return new IodxCst("INTEGER_LITERAL", cstCaret(token), cstParseInteger(token));
+    }
+
+    private IodxCst cstFloatingPoint(Token token) {
+        String tokenText = token.toString();
+        String lowerText = tokenText.toLowerCase();
+        Object value;
+        if (lowerText.endsWith("d")) {
+            value = Double.parseDouble(tokenText.substring(0, tokenText.length() - 1));
+        } else if (lowerText.endsWith("f")) {
+            value = Float.parseFloat(tokenText.substring(0, tokenText.length() - 1));
+        } else {
+            value = Float.parseFloat(tokenText);
+        }
+        return new IodxCst("FLOATING_POINT_LITERAL", cstCaret(token), value);
+    }
+
+    private IodxCst cstRawToken(String type, Token token) {
+        return new IodxCst(type, cstCaret(token), token.toString());
+    }
+
+    private IodxCst cstStructuralToken(String type, Token token) {
+        return new IodxCst(type, cstCaret(token));
+    }
+
+    private IodxCst cstString(String type, Token token) {
+        return new IodxCst(type, cstCaret(token), cstUnescapeString(token));
+    }
+
+    private IodxCst cstIdentifier(Token token) {
+        String text = token.toString();
+        Object value;
+        if ("true".equals(text)) value = Boolean.TRUE;
+        else if ("false".equals(text)) value = Boolean.FALSE;
+        else if ("null".equals(text)) value = null;
+        else value = text;
+        return new IodxCst("ANY_LITERAL", cstCaret(token), value);
+    }
+
+    private IodxCst cstClass(IodxCst name, IodxCst left, IodxCst body, IodxCst right) {
+        YList<IodxCst> children = al();
+        YMap<String, IodxCst> fields = hm();
+
+        if (name != null) {
+            fields.put("name", name);
+            children.add(name);
+        }
+        children.add(left);
+        children.add(body);
+        children.add(right);
+        fields.put("body", body);
+
+        Caret caret = Caret.startEnd(name == null ? left.caret : name.caret, right.caret);
+        return new IodxCst(name == null ? "UNNAMED_CLASS" : "NAMED_CLASS", caret, null, children, fields);
+    }
+
+    private IodxCst cstRequireClass(IodxCst node) {
+        if ("NAMED_CLASS".equals(node.type)) return node;
+        throw new ParseException("Expected a class, but got: " + node.type);
+    }
+
+    private Object cstParseInteger(Token token) {
+        String literal = token.toString();
+        boolean isLong = literal.endsWith("l") || literal.endsWith("L");
+        String number = isLong ? literal.substring(0, literal.length() - 1) : literal;
+        boolean isNegative = number.startsWith("-");
+        int prefixOffset = isNegative ? 1 : 0;
+        int radix = 10;
+
+        if (number.regionMatches(true, prefixOffset, "0x", 0, 2)) {
+            radix = 16;
+            String digits = number.substring(prefixOffset + 2);
+            number = isNegative ? "-" + digits : digits;
+        }
+
+        try {
+            if (isLong) return Long.parseLong(number, radix);
+            return Integer.parseInt(number, radix);
+        } catch (NumberFormatException e) {
+            throw new ParseException("Integer literal out of range: " + literal, token, null);
+        }
+    }
+
+    private String cstUnescapeString(Token token) {
+        try {
+            return IodxEscapeUtils.unescapeQuoted(token.toString());
+        } catch (IodxEscapeException e) {
+            int beginOffset = token.getBeginOffset() + 1 + e.offset;
+            int contentEndOffset = token.getEndOffset() - 1;
+            int endOffset = Math.min(contentEndOffset, beginOffset + e.length);
+            Token errorToken = Token.newToken(
+                Token.TokenType.INVALID, token.getTokenSource(), beginOffset, Math.max(beginOffset + 1, endOffset));
+            throw new ParseException(e.getMessage() + " at offset " + beginOffset, errorToken, null);
+        }
+    }
+}

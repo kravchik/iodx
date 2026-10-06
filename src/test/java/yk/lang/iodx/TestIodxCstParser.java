@@ -584,6 +584,27 @@ public class TestIodxCstParser {
     }
 
     @Test
+    public void testStructuralTokensHaveNoSemanticValue() {
+        IodxCst clazz = parseClass("hello(world)");
+
+        assertEquals("LEFT_PAREN", clazz.children.get(1).type);
+        assertNull(clazz.children.get(1).value);
+        assertEquals("RIGHT_PAREN", clazz.children.get(3).type);
+        assertNull(clazz.children.get(3).value);
+    }
+
+    @Test
+    public void testNestedBodyPositionsUseTheirOwnOpeningParenthesis() {
+        IodxCst outer = parseClass("outer(inner(value))");
+        IodxCst outerBody = outer.childByField.get("body");
+        IodxCst inner = outerBody.children.first();
+        IodxCst innerBody = inner.childByField.get("body");
+
+        assertCstPosition(outerBody, 5, 18);
+        assertCstPosition(innerBody, 11, 17);
+    }
+
+    @Test
     public void testComplexValueParsing() {
         // Test a complex example with various value types in a named class
         String input = "MyClass(42 \"hello\" world)";
