@@ -1,3 +1,4 @@
 target/
+.tmp-gradle-wrapper/
 .idea/
 .DS_Store
