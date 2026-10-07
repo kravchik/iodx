@@ -6,6 +6,9 @@ IODX is a compact, human-readable syntax for structured data, configs, fixtures,
 
 * Main site: [iodx.org](https://iodx.org)
 * Java implementation: [kravchik/iodx](https://github.com/kravchik/iodx)
+* Python implementation: [kravchik/iodx-python](https://github.com/kravchik/iodx-python)
+* C# implementation: [kravchik/iodx-cs](https://github.com/kravchik/iodx-cs)
+* TypeScript implementation: [kravchik/iodx-ts](https://github.com/kravchik/iodx-ts)
 
 ## Features
 
